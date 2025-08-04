@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { adminAPI } from '../services/api';
+import { adminAPI, ticketsAPI } from '../services/api';
 import { 
   FileText, 
   Filter, 
@@ -10,10 +10,21 @@ import {
   Calendar,
   Tag,
   Eye,
-  X
+  X,
+  Edit3,
+  Save,
+  CheckSquare,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import Header from '../components/Header';
 import { formatDateBrasilia, formatDateOnlyBrasilia } from '../utils/dateUtils';
+import { 
+  createChecklistForTicket, 
+  validateChecklist, 
+  isLegacyChecklist, 
+  migrateLegacyChecklist 
+} from '../config/checklistCategories';
 import './TicketManagement.css';
 
 const TicketManagement = () => {
@@ -26,6 +37,12 @@ const TicketManagement = () => {
   const [selectedSystem, setSelectedSystem] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedTicket, setSelectedTicket] = useState(null);
+  
+  // Estados do checklist
+  const [checklist, setChecklist] = useState({});
+  const [editingChecklist, setEditingChecklist] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState({});
+  const [checklistMessage, setChecklistMessage] = useState(null);
 
   // Filtros únicos baseados nos dados
   const [availableLabels, setAvailableLabels] = useState([]);
@@ -99,10 +116,234 @@ const TicketManagement = () => {
 
   const openTicketModal = (ticket) => {
     setSelectedTicket(ticket);
+    
+    // 🔍 DEBUG: Log do ticket para investigação
+    console.log('🔍 DEBUG - Abrindo ticket:', {
+      id: ticket.id,
+      title: ticket.title,
+      labels: ticket.labels,
+      labelsType: typeof ticket.labels,
+      checklist: ticket.checklist,
+      checklistType: typeof ticket.checklist,
+      rawTicket: ticket
+    });
+    
+    // Inicializar checklist
+    let currentChecklist = {};
+    let needsAutoSave = false;
+    
+    if (ticket.checklist) {
+      try {
+        const parsedChecklist = typeof ticket.checklist === 'string' ? 
+          JSON.parse(ticket.checklist) : ticket.checklist;
+        
+        console.log('🔍 DEBUG - Checklist parseado:', parsedChecklist);
+        
+        // Verifica se é checklist no formato antigo
+        if (isLegacyChecklist(parsedChecklist)) {
+          console.log('🔄 Checklist antigo detectado, migrando...');
+          currentChecklist = migrateLegacyChecklist(parsedChecklist, ticket);
+          needsAutoSave = true;
+          
+          setChecklistMessage({
+            type: 'success',
+            text: 'Checklist atualizado para o novo formato automaticamente!'
+          });
+        } else if (validateChecklist(parsedChecklist)) {
+          console.log('✅ Checklist válido encontrado');
+          currentChecklist = parsedChecklist;
+        } else {
+          console.log('⚠️ Checklist inválido detectado, criando novo...');
+          currentChecklist = createChecklistForTicket(ticket);
+          needsAutoSave = true;
+        }
+      } catch (e) {
+        console.error('❌ Erro ao parsear checklist existente:', e);
+        currentChecklist = createChecklistForTicket(ticket);
+        needsAutoSave = true;
+      }
+    } else {
+      console.log('📝 Nenhum checklist encontrado, criando novo...');
+      currentChecklist = createChecklistForTicket(ticket);
+      needsAutoSave = true;
+    }
+    
+    console.log('🔍 DEBUG - Checklist final criado:', {
+      categoriesCount: Object.keys(currentChecklist).length,
+      categories: Object.keys(currentChecklist),
+      hasCloudLabel: ticket.labels ? (typeof ticket.labels === 'string' ? ticket.labels.includes('cloud') : ticket.labels.some(label => label.toLowerCase().includes('cloud'))) : false,
+      checklist: currentChecklist
+    });
+    
+    setChecklist(currentChecklist);
+    
+    // Expande todas as categorias por padrão
+    const expanded = {};
+    Object.keys(currentChecklist).forEach(categoryId => {
+      expanded[categoryId] = true;
+    });
+    setExpandedCategories(expanded);
+    
+    setEditingChecklist(false);
+    
+    // Auto-salva o checklist migrado/criado
+    if (needsAutoSave) {
+      console.log('💾 Auto-salvando checklist...');
+      autoSaveChecklist(ticket.id, currentChecklist);
+    }
   };
 
   const closeTicketModal = () => {
     setSelectedTicket(null);
+    setChecklist({});
+    setEditingChecklist(false);
+    setExpandedCategories({});
+    setChecklistMessage(null);
+  };
+
+  // Funções do checklist
+  const startEditingChecklist = () => {
+    setEditingChecklist(true);
+  };
+
+  const cancelEditingChecklist = () => {
+    let originalChecklist = {};
+    if (selectedTicket.checklist) {
+      try {
+        originalChecklist = typeof selectedTicket.checklist === 'string' ? 
+          JSON.parse(selectedTicket.checklist) : selectedTicket.checklist;
+      } catch (e) {
+        originalChecklist = createChecklistForTicket(selectedTicket);
+      }
+    } else {
+      originalChecklist = createChecklistForTicket(selectedTicket);
+    }
+    setChecklist(originalChecklist);
+    setEditingChecklist(false);
+  };
+
+  const saveChecklist = async () => {
+    try {
+      console.log('💾 Salvando checklist manualmente...', {
+        ticketId: selectedTicket.id,
+        checklist,
+        stringified: JSON.stringify(checklist)
+      });
+      
+      const response = await ticketsAPI.updateChecklist(selectedTicket.id, checklist);
+      console.log('📡 Resposta da API (save manual):', response);
+      
+      // Atualizar ticket na lista
+      setTickets(prev => prev.map(t => 
+        t.id === selectedTicket.id ? { ...t, checklist: JSON.stringify(checklist) } : t
+      ));
+      
+      // Atualizar ticket selecionado
+      setSelectedTicket(prev => ({ ...prev, checklist: JSON.stringify(checklist) }));
+      
+      setEditingChecklist(false);
+      setChecklistMessage({
+        type: 'success',
+        text: 'Checklist atualizado com sucesso!'
+      });
+    } catch (error) {
+      console.error('❌ Erro ao salvar checklist manualmente:', {
+        error,
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
+      setChecklistMessage({
+        type: 'error',
+        text: 'Erro ao salvar checklist: ' + (error.response?.data?.error || error.message)
+      });
+    }
+  };
+
+  const autoSaveChecklist = async (ticketId, checklistToSave) => {
+    try {
+      console.log('💾 Auto-salvando checklist migrado...', {
+        ticketId,
+        checklistToSave,
+        stringified: JSON.stringify(checklistToSave)
+      });
+      
+      const response = await ticketsAPI.updateChecklist(ticketId, checklistToSave);
+      console.log('📡 Resposta da API:', response);
+      
+      // Atualizar ticket na lista silenciosamente
+      setTickets(prev => prev.map(t => 
+        t.id === ticketId ? { ...t, checklist: JSON.stringify(checklistToSave) } : t
+      ));
+      
+      console.log('✅ Checklist migrado salvo automaticamente');
+    } catch (error) {
+      console.error('❌ Erro ao auto-salvar checklist migrado:', {
+        error,
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+    }
+  };
+
+  const updateChecklistItem = (categoryId, itemId, field, value) => {
+    setChecklist(prev => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        items: prev[categoryId].items.map(item => 
+          item.id === itemId ? { ...item, [field]: value } : item
+        )
+      }
+    }));
+  };
+
+  const toggleCategory = (categoryId) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  const hideChecklistMessage = () => {
+    setChecklistMessage(null);
+  };
+
+  // Função para obter resumo do checklist para exibir na tabela
+  const getChecklistSummary = (ticket) => {
+    if (!ticket.checklist) return { total: 0, completed: 0 };
+    
+    try {
+      const parsedChecklist = typeof ticket.checklist === 'string' ? 
+        JSON.parse(ticket.checklist) : ticket.checklist;
+      
+      let total = 0;
+      let completed = 0;
+      
+      if (isLegacyChecklist(parsedChecklist)) {
+        if (Array.isArray(parsedChecklist)) {
+          total = parsedChecklist.length;
+          completed = parsedChecklist.filter(item => item.completed).length;
+        }
+      } else {
+        Object.values(parsedChecklist).forEach(category => {
+          if (category.items && Array.isArray(category.items)) {
+            category.items.forEach(item => {
+              if (!item.isText) {
+                total++;
+                if (item.completed) completed++;
+              }
+            });
+          }
+        });
+      }
+      
+      return { total, completed };
+    } catch (e) {
+      return { total: 0, completed: 0 };
+    }
   };
 
   if (loading) {
@@ -243,6 +484,7 @@ const TicketManagement = () => {
                 <div className="header-cell">Agente</div>
                 <div className="header-cell">Sistema</div>
                 <div className="header-cell">Status</div>
+                <div className="header-cell">Checklist</div>
                 <div className="header-cell">Labels</div>
                 <div className="header-cell">Data</div>
                 <div className="header-cell">Ações</div>
@@ -283,6 +525,28 @@ const TicketManagement = () => {
                       }`}>
                         {ticket.status || 'Aguardando Implantação'}
                       </span>
+                    </div>
+                    
+                    <div className="table-cell checklist">
+                      {(() => {
+                        const summary = getChecklistSummary(ticket);
+                        return (
+                          <div className="checklist-summary">
+                            <CheckSquare size={14} />
+                            <span>{summary.completed}/{summary.total}</span>
+                            <div className="mini-progress-bar">
+                              <div 
+                                className="mini-progress-fill" 
+                                style={{
+                                  width: summary.total > 0 
+                                    ? `${(summary.completed / summary.total) * 100}%` 
+                                    : '0%'
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })()} 
                     </div>
                     
                     <div className="table-cell labels">
@@ -404,6 +668,112 @@ const TicketManagement = () => {
                       <strong>Data limite:</strong>
                       <span>{formatDateBrasilia(selectedTicket.due_date)}</span>
                     </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Seção do Checklist */}
+              <div className="ticket-detail-section">
+                <div className="checklist-header">
+                  <h3>Checklist</h3>
+                  {!editingChecklist ? (
+                    <button
+                      onClick={startEditingChecklist}
+                      className="edit-button"
+                    >
+                      <Edit3 size={16} />
+                      Editar
+                    </button>
+                  ) : (
+                    <div className="checklist-actions">
+                      <button
+                        onClick={saveChecklist}
+                        className="save-button"
+                      >
+                        <Save size={16} />
+                        Salvar
+                      </button>
+                      <button
+                        onClick={cancelEditingChecklist}
+                        className="cancel-button"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {checklistMessage && (
+                  <div className={`checklist-message ${checklistMessage.type}`}>
+                    {checklistMessage.type === 'success' ? <CheckSquare size={16} /> : <AlertCircle size={16} />}
+                    <span>{checklistMessage.text}</span>
+                    <button onClick={hideChecklistMessage} className="message-close">×</button>
+                  </div>
+                )}
+
+                <div className="checklist-content">
+                  {Object.keys(checklist).length === 0 ? (
+                    <p className="no-checklist">Nenhum checklist disponível para este ticket</p>
+                  ) : (
+                    Object.entries(checklist).map(([categoryId, category]) => (
+                      <div key={categoryId} className="checklist-category">
+                        <div 
+                          className="category-header"
+                          onClick={() => toggleCategory(categoryId)}
+                        >
+                          <h4>{category.name}</h4>
+                          {expandedCategories[categoryId] ? 
+                            <ChevronUp size={16} /> : 
+                            <ChevronDown size={16} />
+                          }
+                        </div>
+                        
+                        {expandedCategories[categoryId] && (
+                          <div className="category-items">
+                            {category.items.map((item) => (
+                              <div key={item.id} className="checklist-item">
+                                <div className="item-content">
+                                  {!item.isText ? (
+                                    // Checkbox normal
+                                    <label className="checkbox-label">
+                                      <input
+                                        type="checkbox"
+                                        checked={item.completed}
+                                        onChange={(e) => updateChecklistItem(categoryId, item.id, 'completed', e.target.checked)}
+                                        disabled={!editingChecklist}
+                                      />
+                                      <span className={item.completed ? 'completed' : ''}>
+                                        {item.text}
+                                      </span>
+                                    </label>
+                                  ) : (
+                                    // Campo de texto
+                                    <div className="text-item">
+                                      <label className="text-label">
+                                        {item.text}
+                                      </label>
+                                      {editingChecklist ? (
+                                        <input
+                                          type="text"
+                                          value={item.textValue || ''}
+                                          onChange={(e) => updateChecklistItem(categoryId, item.id, 'textValue', e.target.value)}
+                                          placeholder="Digite aqui..."
+                                          className="text-input"
+                                        />
+                                      ) : (
+                                        <div className="text-display">
+                                          {item.textValue || 'Não preenchido'}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))
                   )}
                 </div>
               </div>

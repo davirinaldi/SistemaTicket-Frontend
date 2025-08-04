@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { agentsAPI } from '../services/api';
+import { adminAPI } from '../services/api';
 import { FileText, Clock, User, Plus } from 'lucide-react';
 import Header from '../components/Header';
 import TicketCard from '../components/TicketCard';
@@ -33,7 +33,8 @@ const Dashboard = () => {
 
   const loadTickets = async () => {
     try {
-      const response = await agentsAPI.getTickets(user.id);
+      // Admin vê todos os tickets do sistema
+      const response = await adminAPI.getAllTickets();
       setTickets(response.data);
     } catch (error) {
       console.error('Erro ao carregar tickets:', error);
@@ -67,8 +68,8 @@ const Dashboard = () => {
       <div className="dashboard-content">
         <div className="dashboard-header">
           <div className="header-info">
-            <h1>Meus Tickets</h1>
-            <p>Bem-vindo, {user?.name}</p>
+            <h1>Todos os Tickets</h1>
+            <p>Bem-vindo, {user?.name} (Admin)</p>
           </div>
           <button onClick={handleCreateTicket} className="create-button">
             <Plus size={18} />
@@ -123,7 +124,7 @@ const Dashboard = () => {
             <div className="empty-state">
               <FileText size={48} />
               <h3>Nenhum ticket encontrado</h3>
-              <p>Você ainda não possui tickets atribuídos.</p>
+              <p>Não há tickets no sistema ainda.</p>
               <button onClick={handleCreateTicket} className="create-button">
                 <Plus size={18} />
                 Criar Primeiro Ticket
@@ -136,6 +137,7 @@ const Dashboard = () => {
                   key={ticket.id} 
                   ticket={ticket}
                   onUpdate={loadTickets}
+                  showAgent={true}
                 />
               ))}
             </div>
