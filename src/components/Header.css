@@ -1,0 +1,288 @@
+.header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #667eea;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.navigation {
+  display: flex;
+  gap: 8px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: none;
+  background: none;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.nav-item:hover {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.nav-item.active {
+  background: #667eea;
+  color: white;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.9rem;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.logout-button:hover {
+  background: #fee;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  gap: 16px;
+}
+
+.loading-container .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .header-content {
+    padding: 0 20px;
+  }
+  
+  .header-left {
+    gap: 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    padding: 0 16px;
+    height: 56px;
+  }
+  
+  .header-left {
+    gap: 20px;
+  }
+  
+  .logo {
+    font-size: 1rem;
+  }
+  
+  .navigation {
+    gap: 4px;
+  }
+  
+  .nav-item {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .user-details {
+    display: none;
+  }
+  
+  .logout-button {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+  
+  .logout-button span {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-content {
+    padding: 0 12px;
+    flex-wrap: nowrap;
+  }
+  
+  .header-left {
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .logo span {
+    display: none;
+  }
+  
+  .navigation {
+    gap: 2px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .navigation::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  
+  .nav-item span {
+    display: none;
+  }
+  
+  .header-right {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 0 8px;
+    height: 52px;
+  }
+  
+  .header-left {
+    gap: 12px;
+  }
+  
+  .logo {
+    font-size: 0.9rem;
+  }
+  
+  .nav-item {
+    padding: 4px 6px;
+    border-radius: 4px;
+  }
+  
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .logout-button {
+    padding: 4px 6px;
+  }
+}
+
+/* Menu mobile melhorado */
+@media (max-width: 640px) {
+  .navigation {
+    position: relative;
+  }
+  
+  .navigation::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 20px;
+    background: linear-gradient(to left, white, transparent);
+    pointer-events: none;
+  }
+}
