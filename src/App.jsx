@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import AgentDashboard from './pages/AgentDashboard';
+import AgentBoard from './components/AgentBoard';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentManagement from './pages/AgentManagement';
 import TicketManagement from './pages/TicketManagement';
@@ -47,7 +49,7 @@ const AppRoutes = () => {
         path="/dashboard" 
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <AgentDashboard />
           </ProtectedRoute>
         } 
       />
@@ -80,10 +82,10 @@ const AppRoutes = () => {
       />
       
       <Route 
-        path="/tickets" 
+        path="/agenda" 
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <AgentBoard />
           </ProtectedRoute>
         } 
       />

@@ -60,18 +60,22 @@ const AgentBoard = () => {
     try {
       await ticketsAPI.updateStatus(ticketId, newStatus);
       
+      // Atualiza o status na lista (incluindo finalizados)
+      setTickets(prev => prev.map(t => 
+        t.id === ticketId ? { ...t, status: newStatus } : t
+      ));
+      
       if (newStatus === 'Finalizado') {
-        // Remove o ticket da lista quando finalizado
-        setTickets(prev => prev.filter(t => t.id !== ticketId));
         setMessage({
           type: 'success',
           text: 'Ticket finalizado com sucesso!'
         });
+        
+        // Sinalizar atualização para o dashboard
+        window.dispatchEvent(new CustomEvent('ticketFinalized', { 
+          detail: { ticketId, timestamp: new Date().toISOString() } 
+        }));
       } else {
-        // Atualiza o status na lista
-        setTickets(prev => prev.map(t => 
-          t.id === ticketId ? { ...t, status: newStatus } : t
-        ));
         setMessage({
           type: 'success',
           text: `Ticket movido para "${newStatus}"`
@@ -331,6 +335,7 @@ const AgentBoard = () => {
   const ticketsByStatus = {
     'Aguardando Implantação': tickets.filter(t => t.status === 'Aguardando Implantação'),
     'Em Andamento': tickets.filter(t => t.status === 'Em Andamento'),
+    'Finalizado': tickets.filter(t => t.status === 'Finalizado'),
   };
 
   return (
@@ -425,6 +430,13 @@ const AgentBoard = () => {
                               Finalizar
                             </button>
                           </>
+                        )}
+                        
+                        {status === 'Finalizado' && (
+                          <div className="finalized-ticket">
+                            <CheckCircle2 size={14} />
+                            <span>Concluído</span>
+                          </div>
                         )}
                       </div>
                     </div>
