@@ -17,6 +17,8 @@ const AgentDashboard = () => {
   const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth < 480);
   const [stats, setStats] = useState({
     total: 0,
     finalizados: 0,
@@ -24,6 +26,17 @@ const AgentDashboard = () => {
     aguardando: 0
   });
   const [monthlyData, setMonthlyData] = useState([]);
+
+  // Hook para detectar mudanças de tamanho da tela
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsSmallMobile(window.innerWidth < 480);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     loadDashboardData();
@@ -172,27 +185,53 @@ const AgentDashboard = () => {
           </div>
           
           <div className="chart-container">
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={monthlyData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={monthlyData} 
+                margin={{ 
+                  top: 20, 
+                  right: isMobile ? 10 : 30, 
+                  left: isMobile ? 10 : 20, 
+                  bottom: isMobile ? 50 : 5 
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="mes" 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
+                  angle={isMobile ? -45 : 0}
+                  textAnchor={isMobile ? 'end' : 'middle'}
+                  height={isMobile ? 60 : 30}
+                  interval={isSmallMobile ? 2 : isMobile ? 1 : 0}
                 />
                 <YAxis 
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: isMobile ? 10 : 12 }}
                   allowDecimals={false}
+                  width={isMobile ? 35 : 60}
                 />
                 <Tooltip 
                   formatter={(value) => [value, 'Implantações']}
-                  labelStyle={{ color: '#333' }}
+                  labelStyle={{ color: '#333', fontSize: '12px' }}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    fontSize: isMobile ? '11px' : '12px',
+                    padding: '8px'
+                  }}
                 />
-                <Legend />
+                <Legend 
+                  wrapperStyle={{ 
+                    fontSize: isMobile ? '11px' : '14px',
+                    paddingTop: '10px'
+                  }}
+                />
                 <Bar 
                   dataKey="implantacoes" 
                   fill="#4f46e5" 
                   name="Lojas Implantadas"
                   radius={[4, 4, 0, 0]}
+                  maxBarSize={isSmallMobile ? 20 : isMobile ? 30 : 50}
                 />
               </BarChart>
             </ResponsiveContainer>
