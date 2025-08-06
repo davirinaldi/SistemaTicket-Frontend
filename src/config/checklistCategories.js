@@ -207,16 +207,7 @@ export const getCategory = (categoryId) => {
 
 // Função para verificar se o ticket tem "cloud" nas labels
 export const hasCloudLabel = (ticket) => {
-  console.log('🔍 DEBUG hasCloudLabel:', {
-    ticket: ticket?.id,
-    title: ticket?.title,
-    labels: ticket?.labels,
-    labelsType: typeof ticket?.labels,
-    isArray: Array.isArray(ticket?.labels)
-  });
-  
   if (!ticket || !ticket.labels) {
-    console.log('❌ Sem ticket ou labels');
     return false;
   }
   
@@ -225,45 +216,30 @@ export const hasCloudLabel = (ticket) => {
   if (typeof labels === 'string') {
     try {
       labels = JSON.parse(labels);
-      console.log('📄 Labels parseadas de string:', labels);
     } catch (e) {
       // Se não conseguir fazer parse, trata como string simples
-      const result = labels.toLowerCase().includes('cloud');
-      console.log('🔤 Verificando string simples:', { labels, result });
-      return result;
+      return labels.toLowerCase().includes('cloud');
     }
   }
   
   // Se for array, verifica se alguma label contém "cloud"  
   if (Array.isArray(labels)) {
-    const result = labels.some(label => {
-      const isString = typeof label === 'string';
-      const hasCloud = isString && label.toLowerCase().includes('cloud');
-      console.log('🏷️ Verificando label:', { label, isString, hasCloud });
-      return hasCloud;
+    return labels.some(label => {
+      return typeof label === 'string' && label.toLowerCase().includes('cloud');
     });
-    
-    console.log('✅ Resultado final hasCloudLabel:', result);
-    return result;
   }
   
-  console.log('❌ Labels não é array nem string válida');
   return false;
 };
 
 // Função para criar checklist apropriado baseado no ticket
 export const createChecklistForTicket = (ticket) => {
-  console.log('🏗️ DEBUG createChecklistForTicket iniciado para:', ticket?.title);
   const checklist = {};
   
   const isCloudTicket = hasCloudLabel(ticket);
-  console.log('🔍 Resultado detecção cloud:', isCloudTicket);
   
   if (isCloudTicket) {
     // Ticket COM cloud - usa todas as categorias do cloud
-    console.log('🌤️ Ticket com label cloud - aplicando checklist cloud');
-    console.log('📋 Categorias cloud disponíveis:', Object.keys(CHECKLIST_CATEGORIES_CLOUD));
-    
     Object.keys(CHECKLIST_CATEGORIES_CLOUD).forEach(categoryId => {
       const category = CHECKLIST_CATEGORIES_CLOUD[categoryId];
       if (category) {
@@ -274,14 +250,10 @@ export const createChecklistForTicket = (ticket) => {
             textValue: item.isText ? '' : undefined // Para campos de texto
           }))
         };
-        console.log(`✅ Categoria adicionada: ${categoryId} (${category.name}) - ${category.items.length} itens`);
       }
     });
   } else {
     // Ticket SEM cloud - usa categorias padrão (Retaguarda + PDV)
-    console.log('🏢 Ticket sem label cloud - aplicando checklist padrão');
-    console.log('📋 Categorias padrão disponíveis:', Object.keys(CHECKLIST_CATEGORIES));
-    
     ['finalizacao_retaguarda', 'finalizacao_pdv'].forEach(categoryId => {
       const category = CHECKLIST_CATEGORIES[categoryId];
       if (category) {
@@ -292,16 +264,9 @@ export const createChecklistForTicket = (ticket) => {
             textValue: item.isText ? '' : undefined // Para campos de texto
           }))
         };
-        console.log(`✅ Categoria adicionada: ${categoryId} (${category.name}) - ${category.items.length} itens`);
       }
     });
   }
-  
-  console.log('🏗️ Checklist final criado:', {
-    totalCategorias: Object.keys(checklist).length,
-    categorias: Object.keys(checklist),
-    isCloud: isCloudTicket
-  });
   
   return checklist;
 };
@@ -350,15 +315,11 @@ export const isLegacyChecklist = (checklist) => {
 
 // Função para migrar checklist antigo para novo formato
 export const migrateLegacyChecklist = (legacyChecklist, ticket) => {
-  console.log('🔄 Migrando checklist antigo para novo formato...');
-  
   // Cria novo checklist baseado nas labels do ticket
   const newChecklist = createChecklistForTicket(ticket);
   
   // Se tinha itens no checklist antigo, tenta preservar o que for possível
   if (Array.isArray(legacyChecklist) && legacyChecklist.length > 0) {
-    console.log(`📝 Tentando preservar ${legacyChecklist.length} itens do checklist antigo`);
-    
     // Para cada categoria do novo checklist
     Object.keys(newChecklist).forEach(categoryId => {
       const category = newChecklist[categoryId];
@@ -389,7 +350,6 @@ export const migrateLegacyChecklist = (legacyChecklist, ticket) => {
           if (newItem.isText && legacyItem.text) {
             newItem.textValue = legacyItem.text;
           }
-          console.log(`✅ Preservado: ${newItem.text}`);
         }
       });
     });
@@ -400,35 +360,33 @@ export const migrateLegacyChecklist = (legacyChecklist, ticket) => {
 
 // Função para validar um checklist
 export const validateChecklist = (checklist) => {
-  console.log('🔍 DEBUG validateChecklist:', { checklist, type: typeof checklist, isArray: Array.isArray(checklist), keys: Object.keys(checklist || {}) });
-  
   if (!checklist || typeof checklist !== 'object') {
-    console.log('❌ Checklist inválido: não é objeto');
     return false;
   }
   
   // Se for array, é formato antigo
   if (Array.isArray(checklist)) {
-    console.log('❌ Checklist inválido: é array (formato antigo)');
     return false;
   }
   
   // Se for objeto vazio, é inválido
   const keys = Object.keys(checklist);
   if (keys.length === 0) {
-    console.log('❌ Checklist inválido: objeto vazio');
     return false;
   }
   
-  // Valida estrutura de categorias
+  // Valida estrutura de categorias (ignorando attachments)
   for (const categoryId in checklist) {
+    // Pular validação dos attachments
+    if (categoryId === 'attachments') {
+      continue;
+    }
+    
     const category = checklist[categoryId];
     if (!category || !category.items || !Array.isArray(category.items)) {
-      console.log(`❌ Checklist inválido: categoria ${categoryId} malformada`);
       return false;
     }
   }
   
-  console.log('✅ Checklist válido');
   return true;
 };

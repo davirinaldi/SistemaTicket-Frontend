@@ -23,6 +23,7 @@ import {
   ChevronUp
 } from 'lucide-react';
 import Header from './Header';
+import AttachmentUpload from './AttachmentUpload';
 import './AgentBoard.css';
 
 const AgentBoard = () => {
@@ -34,6 +35,7 @@ const AgentBoard = () => {
   const [checklist, setChecklist] = useState({});
   const [expandedCategories, setExpandedCategories] = useState({});
   const [message, setMessage] = useState(null);
+  const [attachments, setAttachments] = useState({});
 
   useEffect(() => {
     loadTickets();
@@ -96,7 +98,6 @@ const AgentBoard = () => {
         
         // Verifica se é checklist no formato antigo
         if (isLegacyChecklist(parsedChecklist)) {
-          console.log('🔄 Checklist antigo detectado, migrando...');
           currentChecklist = migrateLegacyChecklist(parsedChecklist, ticket);
           needsAutoSave = true; // Marca para salvar automaticamente
           
@@ -109,7 +110,6 @@ const AgentBoard = () => {
           currentChecklist = parsedChecklist;
         } else {
           // Checklist inválido, criar novo
-          console.log('⚠️ Checklist inválido detectado, criando novo...');
           currentChecklist = createChecklistForTicket(ticket);
           needsAutoSave = true;
         }
@@ -126,10 +126,16 @@ const AgentBoard = () => {
     
     setChecklist(currentChecklist);
     
-    // Expande todas as categorias por padrão
+    // Carregar anexos do checklist
+    const checklistAttachments = currentChecklist.attachments || {};
+    setAttachments(checklistAttachments);
+    
+    // Expande todas as categorias por padrão (excluindo attachments)
     const expanded = {};
     Object.keys(currentChecklist).forEach(categoryId => {
-      expanded[categoryId] = true;
+      if (categoryId !== 'attachments') {
+        expanded[categoryId] = true;
+      }
     });
     setExpandedCategories(expanded);
     
@@ -146,6 +152,7 @@ const AgentBoard = () => {
     setEditingChecklist(false);
     setChecklist({});
     setExpandedCategories({});
+    setAttachments({});
   };
 
   const startEditingChecklist = () => {
@@ -195,18 +202,14 @@ const AgentBoard = () => {
 
   const autoSaveChecklist = async (ticketId, checklistToSave) => {
     try {
-      console.log('💾 Auto-salvando checklist migrado...');
       await ticketsAPI.updateChecklist(ticketId, checklistToSave);
       
       // Atualizar o ticket na lista silenciosamente
       setTickets(prev => prev.map(t => 
         t.id === ticketId ? { ...t, checklist: JSON.stringify(checklistToSave) } : t
       ));
-      
-      console.log('✅ Checklist migrado salvo automaticamente');
     } catch (error) {
-      console.error('❌ Erro ao auto-salvar checklist migrado:', error);
-      // Não mostra erro para o usuário no auto-save, apenas loga
+      // Não mostra erro para o usuário no auto-save, apenas falha silenciosamente
     }
   };
 
@@ -257,6 +260,63 @@ const AgentBoard = () => {
 
   const hideMessage = () => {
     setMessage(null);
+  };
+
+  // Funções dos anexos
+  const handleAttachmentUpload = (newAttachment) => {
+    const updatedAttachments = {
+      ...attachments,
+      [newAttachment.id]: newAttachment
+    };
+    
+    const updatedChecklist = {
+      ...checklist,
+      attachments: updatedAttachments
+    };
+    
+    // Atualizar estados locais
+    setAttachments(updatedAttachments);
+    setChecklist(updatedChecklist);
+    
+    // Atualizar ticket na lista
+    setTickets(prevTickets => 
+      prevTickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, checklist: JSON.stringify(updatedChecklist) };
+        }
+        return t;
+      })
+    );
+    
+    // Atualizar ticket selecionado
+    setSelectedTicket(prev => ({ ...prev, checklist: JSON.stringify(updatedChecklist) }));
+  };
+
+  const handleAttachmentDelete = (attachmentId) => {
+    const updatedAttachments = { ...attachments };
+    delete updatedAttachments[attachmentId];
+    
+    const updatedChecklist = { ...checklist };
+    if (updatedChecklist.attachments) {
+      delete updatedChecklist.attachments[attachmentId];
+    }
+    
+    // Atualizar estados locais
+    setAttachments(updatedAttachments);
+    setChecklist(updatedChecklist);
+    
+    // Atualizar ticket na lista
+    setTickets(prevTickets => 
+      prevTickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, checklist: JSON.stringify(updatedChecklist) };
+        }
+        return t;
+      })
+    );
+    
+    // Atualizar ticket selecionado
+    setSelectedTicket(prev => ({ ...prev, checklist: JSON.stringify(updatedChecklist) }));
   };
 
   if (loading) {
@@ -456,7 +516,9 @@ const AgentBoard = () => {
                   {Object.keys(checklist).length === 0 ? (
                     <p className="no-checklist">Nenhum checklist disponível para este ticket</p>
                   ) : (
-                    Object.entries(checklist).map(([categoryId, category]) => (
+                    Object.entries(checklist)
+                      .filter(([categoryId]) => categoryId !== 'attachments')
+                      .map(([categoryId, category]) => (
                       <div key={categoryId} className="checklist-category">
                         <div 
                           className="category-header"
@@ -518,6 +580,15 @@ const AgentBoard = () => {
                   )}
                 </div>
               </div>
+
+              {/* Seção de Anexos */}
+              <AttachmentUpload
+                ticketId={selectedTicket.id}
+                attachments={attachments}
+                onUploadSuccess={handleAttachmentUpload}
+                onDeleteSuccess={handleAttachmentDelete}
+                disabled={false}
+              />
 
             </div>
           </div>

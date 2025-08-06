@@ -27,6 +27,7 @@ import {
   isLegacyChecklist, 
   migrateLegacyChecklist 
 } from '../config/checklistCategories';
+import AttachmentUpload from '../components/AttachmentUpload';
 import './TicketManagement.css';
 
 const TicketManagement = () => {
@@ -56,6 +57,9 @@ const TicketManagement = () => {
   const [editingChecklist, setEditingChecklist] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [checklistMessage, setChecklistMessage] = useState(null);
+  
+  // Estados dos anexos
+  const [attachments, setAttachments] = useState({});
 
   // Filtros únicos baseados nos dados
   const [availableLabels, setAvailableLabels] = useState([]);
@@ -136,17 +140,6 @@ const TicketManagement = () => {
   const openTicketModal = (ticket) => {
     setSelectedTicket(ticket);
     
-    // 🔍 DEBUG: Log do ticket para investigação
-    console.log('🔍 DEBUG - Abrindo ticket:', {
-      id: ticket.id,
-      title: ticket.title,
-      labels: ticket.labels,
-      labelsType: typeof ticket.labels,
-      checklist: ticket.checklist,
-      checklistType: typeof ticket.checklist,
-      rawTicket: ticket
-    });
-    
     // Inicializar checklist
     let currentChecklist = {};
     let needsAutoSave = false;
@@ -156,11 +149,8 @@ const TicketManagement = () => {
         const parsedChecklist = typeof ticket.checklist === 'string' ? 
           JSON.parse(ticket.checklist) : ticket.checklist;
         
-        console.log('🔍 DEBUG - Checklist parseado:', parsedChecklist);
-        
         // Verifica se é checklist no formato antigo
         if (isLegacyChecklist(parsedChecklist)) {
-          console.log('🔄 Checklist antigo detectado, migrando...');
           currentChecklist = migrateLegacyChecklist(parsedChecklist, ticket);
           needsAutoSave = true;
           
@@ -169,37 +159,33 @@ const TicketManagement = () => {
             text: 'Checklist atualizado para o novo formato automaticamente!'
           });
         } else if (validateChecklist(parsedChecklist)) {
-          console.log('✅ Checklist válido encontrado');
           currentChecklist = parsedChecklist;
         } else {
-          console.log('⚠️ Checklist inválido detectado, criando novo...');
           currentChecklist = createChecklistForTicket(ticket);
           needsAutoSave = true;
         }
       } catch (e) {
-        console.error('❌ Erro ao parsear checklist existente:', e);
+        console.error('Erro ao parsear checklist existente:', e);
         currentChecklist = createChecklistForTicket(ticket);
         needsAutoSave = true;
       }
     } else {
-      console.log('📝 Nenhum checklist encontrado, criando novo...');
       currentChecklist = createChecklistForTicket(ticket);
       needsAutoSave = true;
     }
     
-    console.log('🔍 DEBUG - Checklist final criado:', {
-      categoriesCount: Object.keys(currentChecklist).length,
-      categories: Object.keys(currentChecklist),
-      hasCloudLabel: ticket.labels ? (typeof ticket.labels === 'string' ? ticket.labels.includes('cloud') : ticket.labels.some(label => label.toLowerCase().includes('cloud'))) : false,
-      checklist: currentChecklist
-    });
-    
     setChecklist(currentChecklist);
     
-    // Expande todas as categorias por padrão
+    // Carregar anexos do checklist
+    const checklistAttachments = currentChecklist.attachments || {};
+    setAttachments(checklistAttachments);
+    
+    // Expande todas as categorias por padrão (excluindo attachments)
     const expanded = {};
     Object.keys(currentChecklist).forEach(categoryId => {
-      expanded[categoryId] = true;
+      if (categoryId !== 'attachments') {
+        expanded[categoryId] = true;
+      }
     });
     setExpandedCategories(expanded);
     
@@ -207,7 +193,6 @@ const TicketManagement = () => {
     
     // Auto-salva o checklist migrado/criado
     if (needsAutoSave) {
-      console.log('💾 Auto-salvando checklist...');
       autoSaveChecklist(ticket.id, currentChecklist);
     }
   };
@@ -218,6 +203,7 @@ const TicketManagement = () => {
     setEditingChecklist(false);
     setExpandedCategories({});
     setChecklistMessage(null);
+    setAttachments({});
   };
 
   // Funções do checklist
@@ -243,14 +229,7 @@ const TicketManagement = () => {
 
   const saveChecklist = async () => {
     try {
-      console.log('💾 Salvando checklist manualmente...', {
-        ticketId: selectedTicket.id,
-        checklist,
-        stringified: JSON.stringify(checklist)
-      });
-      
       const response = await ticketsAPI.updateChecklist(selectedTicket.id, checklist);
-      console.log('📡 Resposta da API (save manual):', response);
       
       // Atualizar ticket na lista
       setTickets(prev => prev.map(t => 
@@ -266,12 +245,6 @@ const TicketManagement = () => {
         text: 'Checklist atualizado com sucesso!'
       });
     } catch (error) {
-      console.error('❌ Erro ao salvar checklist manualmente:', {
-        error,
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
       
       setChecklistMessage({
         type: 'error',
@@ -282,28 +255,13 @@ const TicketManagement = () => {
 
   const autoSaveChecklist = async (ticketId, checklistToSave) => {
     try {
-      console.log('💾 Auto-salvando checklist migrado...', {
-        ticketId,
-        checklistToSave,
-        stringified: JSON.stringify(checklistToSave)
-      });
-      
-      const response = await ticketsAPI.updateChecklist(ticketId, checklistToSave);
-      console.log('📡 Resposta da API:', response);
+      await ticketsAPI.updateChecklist(ticketId, checklistToSave);
       
       // Atualizar ticket na lista silenciosamente
       setTickets(prev => prev.map(t => 
         t.id === ticketId ? { ...t, checklist: JSON.stringify(checklistToSave) } : t
       ));
-      
-      console.log('✅ Checklist migrado salvo automaticamente');
     } catch (error) {
-      console.error('❌ Erro ao auto-salvar checklist migrado:', {
-        error,
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
     }
   };
 
@@ -328,6 +286,63 @@ const TicketManagement = () => {
 
   const hideChecklistMessage = () => {
     setChecklistMessage(null);
+  };
+
+  // Funções dos anexos
+  const handleAttachmentUpload = (newAttachment) => {
+    const updatedAttachments = {
+      ...attachments,
+      [newAttachment.id]: newAttachment
+    };
+    
+    const updatedChecklist = {
+      ...checklist,
+      attachments: updatedAttachments
+    };
+    
+    // Atualizar estados locais
+    setAttachments(updatedAttachments);
+    setChecklist(updatedChecklist);
+    
+    // Atualizar ticket na lista
+    setTickets(prevTickets => 
+      prevTickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, checklist: JSON.stringify(updatedChecklist) };
+        }
+        return t;
+      })
+    );
+    
+    // Atualizar ticket selecionado
+    setSelectedTicket(prev => ({ ...prev, checklist: JSON.stringify(updatedChecklist) }));
+  };
+
+  const handleAttachmentDelete = (attachmentId) => {
+    const updatedAttachments = { ...attachments };
+    delete updatedAttachments[attachmentId];
+    
+    const updatedChecklist = { ...checklist };
+    if (updatedChecklist.attachments) {
+      delete updatedChecklist.attachments[attachmentId];
+    }
+    
+    // Atualizar estados locais
+    setAttachments(updatedAttachments);
+    setChecklist(updatedChecklist);
+    
+    // Atualizar ticket na lista
+    setTickets(prevTickets => 
+      prevTickets.map(t => {
+        if (t.id === selectedTicket.id) {
+          return { ...t, checklist: JSON.stringify(updatedChecklist) };
+        }
+        return t;
+      })
+    );
+    
+    // Atualizar ticket selecionado
+    setSelectedTicket(prev => ({ ...prev, checklist: JSON.stringify(updatedChecklist) }));
   };
 
   // Função para obter resumo do checklist para exibir na tabela
@@ -777,7 +792,9 @@ const TicketManagement = () => {
                   {Object.keys(checklist).length === 0 ? (
                     <p className="no-checklist">Nenhum checklist disponível para este ticket</p>
                   ) : (
-                    Object.entries(checklist).map(([categoryId, category]) => (
+                    Object.entries(checklist)
+                      .filter(([categoryId]) => categoryId !== 'attachments')
+                      .map(([categoryId, category]) => (
                       <div key={categoryId} className="checklist-category">
                         <div 
                           className="category-header"
@@ -839,6 +856,15 @@ const TicketManagement = () => {
                   )}
                 </div>
               </div>
+
+              {/* Seção de Anexos */}
+              <AttachmentUpload
+                ticketId={selectedTicket.id}
+                attachments={attachments}
+                onUploadSuccess={handleAttachmentUpload}
+                onDeleteSuccess={handleAttachmentDelete}
+                disabled={false}
+              />
 
             </div>
           </div>

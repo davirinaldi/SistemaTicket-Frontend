@@ -53,6 +53,13 @@ export const ticketsAPI = {
   update: (id, data) => api.put(`/trello-cards/${id}`, data),
   updateStatus: (id, status) => api.patch(`/tickets/${id}/status`, { status }),
   updateChecklist: (id, checklist) => api.patch(`/tickets/${id}/checklist`, { checklist }),
+  
+  // Anexos do checklist
+  uploadAttachment: (ticketId, formData) => api.post(`/tickets/${ticketId}/checklist/attachments`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getAttachments: (ticketId) => api.get(`/tickets/${ticketId}/checklist/attachments`),
+  deleteAttachment: (ticketId, attachmentId) => api.delete(`/tickets/${ticketId}/checklist/attachments/${attachmentId}`),
   delete: (id) => api.delete(`/trello-cards/${id}`),
 };
 
