@@ -15,7 +15,9 @@ import {
   Save,
   CheckSquare,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Header from '../components/Header';
 import { formatDateBrasilia, formatDateOnlyBrasilia } from '../utils/dateUtils';
@@ -38,6 +40,17 @@ const TicketManagement = () => {
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedTicket, setSelectedTicket] = useState(null);
   
+  // Estados da paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    totalItems: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  
   // Estados do checklist
   const [checklist, setChecklist] = useState({});
   const [editingChecklist, setEditingChecklist] = useState(false);
@@ -51,7 +64,7 @@ const TicketManagement = () => {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentPage, selectedAgent, searchTerm, selectedStatus]);
 
   useEffect(() => {
     // Extrair valores únicos para filtros
@@ -74,12 +87,23 @@ const TicketManagement = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      
+      const params = {
+        page: currentPage,
+        limit: 10
+      };
+      
+      if (selectedAgent) params.agente_id = selectedAgent;
+      if (searchTerm) params.search = searchTerm;
+      if (selectedStatus) params.status = selectedStatus;
+      
       const [ticketsResponse, agentsResponse] = await Promise.all([
-        adminAPI.getAllTickets(),
+        adminAPI.getAllTickets(params),
         adminAPI.getAgents()
       ]);
       
       setTickets(ticketsResponse.data.tickets || []);
+      setPagination(ticketsResponse.data.pagination || pagination);
       setAgents(agentsResponse.data || []);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
@@ -88,17 +112,11 @@ const TicketManagement = () => {
     }
   };
 
+  // Filtros client-side apenas para labels e sistema (já que não estão no backend)
   const filteredTickets = tickets.filter(ticket => {
-    const matchesAgent = !selectedAgent || ticket.agente_id?.toString() === selectedAgent;
-    const matchesSearch = !searchTerm || 
-      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.ticket?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.agente?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLabel = !selectedLabel || ticket.labels?.includes(selectedLabel);
     const matchesSystem = !selectedSystem || ticket.sistema === selectedSystem;
-    const matchesStatus = !selectedStatus || ticket.status === selectedStatus;
-
-    return matchesAgent && matchesSearch && matchesLabel && matchesSystem && matchesStatus;
+    return matchesLabel && matchesSystem;
   });
 
   const getAgentName = (agentId) => {
@@ -112,6 +130,7 @@ const TicketManagement = () => {
     setSelectedLabel('');
     setSelectedSystem('');
     setSelectedStatus('');
+    setCurrentPage(1);
   };
 
   const openTicketModal = (ticket) => {
@@ -464,7 +483,7 @@ const TicketManagement = () => {
 
           <div className="results-summary">
             <span>
-              Mostrando {filteredTickets.length} de {tickets.length} tickets
+              Mostrando {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.totalItems)} de {pagination.totalItems} tickets
             </span>
           </div>
         </div>
@@ -584,6 +603,49 @@ const TicketManagement = () => {
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+          
+          {/* Paginação */}
+          {pagination.totalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={!pagination.hasPrevPage}
+                className="pagination-button"
+              >
+                Primeira
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={!pagination.hasPrevPage}
+                className="pagination-button"
+              >
+                <ChevronLeft size={16} />
+                Anterior
+              </button>
+              
+              <div className="pagination-info">
+                <span>Página {pagination.page} de {pagination.totalPages}</span>
+              </div>
+              
+              <button
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={!pagination.hasNextPage}
+                className="pagination-button"
+              >
+                Próxima
+                <ChevronRight size={16} />
+              </button>
+              
+              <button
+                onClick={() => setCurrentPage(pagination.totalPages)}
+                disabled={!pagination.hasNextPage}
+                className="pagination-button"
+              >
+                Última
+              </button>
             </div>
           )}
         </div>

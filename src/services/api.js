@@ -58,7 +58,7 @@ export const ticketsAPI = {
 
 // ===== ADMINISTRAÇÃO =====
 export const adminAPI = {
-  getAllTickets: () => api.get('/admin/all-tickets'),
+  getAllTickets: (params = {}) => api.get('/admin/all-tickets', { params }),
   getDashboard: () => api.get('/admin/dashboard'),
   getNewAgentsReport: () => api.get('/admin/new-agents-report'),
   createAdmin: (data) => api.post('/admin/create-admin', data),
