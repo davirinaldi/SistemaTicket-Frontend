@@ -54,11 +54,21 @@
 
 @media (max-width: 480px) {
   .container {
-    padding: 0 12px;
+    padding: 0 8px;
   }
   
   .responsive-container {
-    padding: 0 8px;
+    padding: 0 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding: 0 6px;
+  }
+  
+  .responsive-container {
+    padding: 0 4px;
   }
 }
 
@@ -67,6 +77,18 @@
   .App {
     overflow-x: hidden;
     position: relative;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  html {
+    height: -webkit-fill-available;
+  }
+  
+  body {
+    min-height: -webkit-fill-available;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 }
 
@@ -154,3 +176,26 @@
 /* Height utilities */
 .h-full { height: 100% !important; }
 .h-screen { height: 100vh !important; }
+
+/* Responsive utilities */
+@media (max-width: 768px) {
+  .mobile-hidden { display: none !important; }
+  .mobile-block { display: block !important; }
+  .mobile-flex { display: flex !important; }
+}
+
+@media (min-width: 769px) {
+  .desktop-hidden { display: none !important; }
+}
+
+/* Touch-friendly improvements */
+@media (max-width: 768px) {
+  button, .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input, textarea, select {
+    font-size: 16px;
+  }
+}

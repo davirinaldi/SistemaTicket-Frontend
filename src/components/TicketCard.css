@@ -96,8 +96,15 @@
 .ticket-info {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+@media (max-width: 768px) {
+  .ticket-info {
+    gap: 4px;
+    margin-bottom: 12px;
+  }
 }
 
 .info-item {
@@ -118,6 +125,13 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .ticket-labels {
+    gap: 4px;
+    margin-bottom: 10px;
+  }
 }
 
 .label-tag {
@@ -464,47 +478,143 @@
 
 @media (max-width: 768px) {
   .ticket-card {
-    padding: 16px;
+    padding: 14px;
+  }
+  
+  .ticket-header {
+    margin-bottom: 10px;
   }
   
   .ticket-title {
     font-size: 1rem;
+    line-height: 1.2;
   }
   
   .ticket-actions {
-    gap: 2px;
+    gap: 6px;
+    flex-shrink: 0;
   }
   
   .action-btn {
-    padding: 4px;
+    padding: 6px;
+    width: 28px;
+    height: 28px;
+  }
+  
+  .ticket-description {
+    font-size: 0.85rem;
+    -webkit-line-clamp: 2;
+    margin-bottom: 12px;
   }
   
   .info-item {
     font-size: 0.8rem;
+    gap: 6px;
   }
   
   .label-tag {
     font-size: 0.7rem;
     padding: 3px 6px;
   }
+  
+  .ticket-checklist-summary {
+    padding: 10px;
+    margin-top: 10px;
+  }
+  
+  .checklist-progress {
+    font-size: 0.8rem;
+  }
+  
+  .view-checklist-btn {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
 
   .modal-content.checklist-modal {
-    max-width: 95vw;
-    max-height: 90vh;
+    max-width: calc(100vw - 16px);
+    max-height: calc(100vh - 20px);
+    margin: 10px 8px;
   }
 
   .modal-header,
   .modal-body {
-    padding: 16px;
+    padding: 14px;
   }
 
   .checklist-actions {
     flex-direction: column;
+    gap: 8px;
   }
 
   .save-button,
   .cancel-button {
     width: 100%;
     justify-content: center;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ticket-card {
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .ticket-title-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .ticket-title {
+    font-size: 0.95rem;
+  }
+  
+  .ticket-actions {
+    gap: 4px;
+    align-self: flex-end;
+  }
+  
+  .action-btn {
+    padding: 5px;
+    width: 26px;
+    height: 26px;
+  }
+  
+  .ticket-description {
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+  }
+  
+  .info-item {
+    font-size: 0.75rem;
+  }
+  
+  .label-tag {
+    font-size: 0.65rem;
+    padding: 2px 5px;
+  }
+  
+  .ticket-checklist-summary {
+    padding: 8px;
+  }
+  
+  .modal-content.checklist-modal {
+    max-width: calc(100vw - 8px);
+    max-height: calc(100vh - 16px);
+    margin: 8px 4px;
+  }
+  
+  .modal-header {
+    padding: 12px;
+  }
+  
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.1rem;
   }
 }

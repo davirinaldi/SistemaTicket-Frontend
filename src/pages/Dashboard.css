@@ -9,6 +9,12 @@
   padding: 24px 20px;
 }
 
+@media (max-width: 1024px) {
+  .dashboard-content {
+    padding: 20px 16px;
+  }
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;
@@ -105,8 +111,15 @@
 
 .tickets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .tickets-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
 
 .empty-state {
@@ -165,22 +178,39 @@
 }
 
 @media (max-width: 768px) {
+  .dashboard-content {
+    padding: 16px 12px;
+  }
+  
   .dashboard-header {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
+    text-align: center;
   }
   
   .header-info h1 {
     font-size: 1.5rem;
   }
   
+  .header-info p {
+    font-size: 0.95rem;
+  }
+  
+  .create-button {
+    padding: 14px 24px;
+    font-size: 1rem;
+    justify-content: center;
+  }
+  
   .stats-summary {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
   
   .tickets-grid {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
   
   .summary-card {
@@ -194,5 +224,59 @@
   
   .summary-number {
     font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: 12px 8px;
+  }
+  
+  .header-info h1 {
+    font-size: 1.3rem;
+  }
+  
+  .header-info p {
+    font-size: 0.9rem;
+  }
+  
+  .create-button {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+  
+  .stats-summary {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .summary-card {
+    padding: 14px;
+    gap: 12px;
+  }
+  
+  .summary-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .summary-number {
+    font-size: 1.4rem;
+  }
+  
+  .summary-label {
+    font-size: 0.85rem;
+  }
+  
+  .empty-state {
+    padding: 40px 16px;
+  }
+  
+  .empty-state h3 {
+    font-size: 1.1rem;
+  }
+  
+  .empty-state p {
+    font-size: 0.9rem;
   }
 }

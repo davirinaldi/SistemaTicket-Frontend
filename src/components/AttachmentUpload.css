@@ -164,9 +164,17 @@
 
 .attachment-meta {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   font-size: 12px;
   color: #64748b;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .attachment-meta {
+    gap: 8px;
+    font-size: 11px;
+  }
 }
 
 .attachment-type {
@@ -210,25 +218,100 @@
 }
 
 /* Responsive */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .attachment-upload {
+    padding: 12px;
+  }
+  
   .upload-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .upload-header h4 {
+    font-size: 15px;
+  }
+  
+  .upload-button {
+    padding: 10px 16px;
+    font-size: 15px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .attachment-upload {
+    padding: 10px;
+    margin-top: 12px;
+  }
+  
+  .upload-header {
+    margin-bottom: 10px;
   }
   
   .attachment-meta {
     flex-direction: column;
     gap: 4px;
+    font-size: 11px;
   }
   
   .attachment-item {
+    padding: 10px;
+    gap: 10px;
+  }
+  
+  .attachment-name a {
+    font-size: 14px;
+    word-break: break-all;
+  }
+  
+  .delete-attachment {
+    padding: 8px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+}
+
+@media (max-width: 480px) {
+  .attachment-upload {
+    padding: 8px;
+  }
+  
+  .upload-header h4 {
+    font-size: 14px;
+  }
+  
+  .upload-button {
+    padding: 12px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+  
+  .attachment-item {
+    padding: 8px;
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
   }
   
+  .attachment-info {
+    order: 1;
+  }
+  
   .delete-attachment {
-    align-self: flex-end;
+    order: 2;
+    align-self: center;
+    margin-top: 4px;
+  }
+  
+  .upload-hints {
+    font-size: 11px;
+  }
+  
+  .no-attachments {
+    padding: 16px;
+    font-size: 13px;
   }
 }

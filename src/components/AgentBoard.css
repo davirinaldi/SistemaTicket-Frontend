@@ -76,6 +76,13 @@
   min-height: 600px;
 }
 
+@media (max-width: 1024px) {
+  .board-columns {
+    gap: 16px;
+    min-height: 500px;
+  }
+}
+
 .board-column {
   background: white;
   border-radius: 12px;
@@ -599,9 +606,14 @@
 }
 
 @media (max-width: 768px) {
+  .board-content {
+    padding: 16px 12px;
+  }
+  
   .board-columns {
     grid-template-columns: 1fr;
     gap: 16px;
+    min-height: auto;
   }
   
   .board-header {
@@ -609,20 +621,48 @@
     gap: 12px;
     align-items: stretch;
     text-align: center;
+    margin-bottom: 20px;
   }
   
   .board-header h1 {
     font-size: 1.5rem;
   }
   
+  .board-stats {
+    text-align: center;
+  }
+  
+  .column-content {
+    min-height: 300px;
+    padding: 12px;
+  }
+  
+  .ticket-card {
+    padding: 14px;
+  }
+  
+  .ticket-title {
+    font-size: 0.9rem;
+  }
+  
+  .ticket-actions {
+    gap: 4px;
+  }
+  
+  .action-button {
+    padding: 5px 8px;
+    font-size: 0.75rem;
+  }
+  
   .modal-content {
-    margin: 10px;
-    max-height: calc(100vh - 20px);
+    margin: 8px;
+    max-height: calc(100vh - 16px);
+    max-width: calc(100vw - 16px);
   }
   
   .modal-header,
   .modal-body {
-    padding: 16px;
+    padding: 14px;
   }
   
   .detail-grid {
@@ -637,28 +677,88 @@
   
   .checklist-actions {
     justify-content: center;
+    flex-wrap: wrap;
   }
 }
 
 @media (max-width: 480px) {
   .board-content {
-    padding: 16px 12px;
+    padding: 12px 8px;
   }
   
   .board-header h1 {
-    font-size: 1.3rem;
+    font-size: 1.25rem;
+  }
+  
+  .board-stats {
+    font-size: 0.85rem;
+  }
+  
+  .board-columns {
+    gap: 12px;
+  }
+  
+  .column-content {
+    padding: 10px;
+    min-height: 250px;
   }
   
   .ticket-card {
-    padding: 12px;
+    padding: 10px;
+  }
+  
+  .ticket-title {
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+  
+  .ticket-system,
+  .ticket-date {
+    font-size: 0.75rem;
+    margin-bottom: 6px;
   }
   
   .ticket-actions {
     flex-direction: column;
+    gap: 6px;
   }
   
   .action-button {
-    padding: 8px 12px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .finalized-ticket {
+    padding: 6px 10px;
+    font-size: 0.7rem;
+  }
+  
+  .modal-content {
+    margin: 4px;
+    max-height: calc(100vh - 8px);
+    max-width: calc(100vw - 8px);
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: 12px;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .checklist-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .edit-button,
+  .save-button,
+  .cancel-button {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
   }
 }
 
