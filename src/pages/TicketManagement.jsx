@@ -68,25 +68,25 @@ const TicketManagement = () => {
 
   useEffect(() => {
     loadData();
-  }, [currentPage, selectedAgent, searchTerm, selectedStatus]);
+  }, [currentPage, selectedAgent, searchTerm, selectedStatus, selectedLabel, selectedSystem]);
 
   useEffect(() => {
-    // Extrair valores únicos para filtros
-    const labels = new Set();
-    const systems = new Set();
-
-    tickets.forEach(ticket => {
-      if (ticket.labels) {
-        ticket.labels.forEach(label => labels.add(label));
+    // Carregar valores únicos para filtros de todos os tickets
+    const loadFilterValues = async () => {
+      try {
+        const response = await adminAPI.getFilterValues();
+        const labels = response.data.data?.labels || [];
+        const sistemas = response.data.data?.sistemas || [];
+        
+        setAvailableLabels(labels);
+        setAvailableSystems(sistemas);
+      } catch (error) {
+        console.error('Erro ao carregar valores de filtros:', error);
       }
-      if (ticket.sistema) {
-        systems.add(ticket.sistema);
-      }
-    });
+    };
 
-    setAvailableLabels([...labels].sort());
-    setAvailableSystems([...systems].sort());
-  }, [tickets]);
+    loadFilterValues();
+  }, []); // Executa apenas uma vez ao montar o componente
 
   const loadData = async () => {
     try {
@@ -100,6 +100,9 @@ const TicketManagement = () => {
       if (selectedAgent) params.agente_id = selectedAgent;
       if (searchTerm) params.search = searchTerm;
       if (selectedStatus) params.status = selectedStatus;
+      if (selectedLabel) params.label = selectedLabel;
+      if (selectedSystem) params.sistema = selectedSystem;
+      
       
       const [ticketsResponse, agentsResponse] = await Promise.all([
         adminAPI.getAllTickets(params),
@@ -116,12 +119,8 @@ const TicketManagement = () => {
     }
   };
 
-  // Filtros client-side apenas para labels e sistema (já que não estão no backend)
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesLabel = !selectedLabel || ticket.labels?.includes(selectedLabel);
-    const matchesSystem = !selectedSystem || ticket.sistema === selectedSystem;
-    return matchesLabel && matchesSystem;
-  });
+  // Todos os filtros agora são aplicados no backend
+  const filteredTickets = tickets;
 
   const getAgentName = (agentId) => {
     const agent = agents.find(a => a.id === agentId);
