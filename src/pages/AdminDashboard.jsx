@@ -12,7 +12,8 @@ import {
   Edit,
   Trash2,
   Eye,
-  EyeOff
+  EyeOff,
+  Wrench
 } from 'lucide-react';
 import Header from '../components/Header';
 import './AdminDashboard.css';
@@ -76,7 +77,7 @@ const AdminDashboard = () => {
     );
   }
 
-  const { summary, agentStats, systemStats, labelStats } = dashboardData || {};
+  const { summary, agentStats, systemStats, labelStats, statusStats } = dashboardData || {};
 
   // Função para obter o nome do agente pelo ID
   const getAgentName = (agentId) => {
@@ -135,24 +136,32 @@ const AdminDashboard = () => {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon admins">
-              <TrendingUp size={24} />
+            <div className="stat-icon progress">
+              <Clock size={24} />
             </div>
             <div className="stat-content">
-              <h3>Administradores</h3>
-              <p className="stat-number">{summary?.adminUsers || 0}</p>
+              <h3>Em Andamento</h3>
+              <p className="stat-number">{statusStats?.['Em Andamento'] || 0}</p>
             </div>
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon systems">
-              <Clock size={24} />
+            <div className="stat-icon done">
+              <CheckCircle size={24} />
             </div>
             <div className="stat-content">
-              <h3>Sistemas</h3>
-              <p className="stat-number">
-                {systemStats ? Object.keys(systemStats).length : 0}
-              </p>
+              <h3>Finalizados</h3>
+              <p className="stat-number">{statusStats?.['Finalizado'] || 0}</p>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon waiting">
+              <Wrench size={24} />
+            </div>
+            <div className="stat-content">
+              <h3>Aguardando Implantação</h3>
+              <p className="stat-number">{statusStats?.['Aguardando Implantação'] || 0}</p>
             </div>
           </div>
         </div>
@@ -161,28 +170,48 @@ const AdminDashboard = () => {
           <div className="chart-card">
             <h3>Tickets por Agente</h3>
             <div className="chart-content">
-              {agentStats && Object.keys(agentStats).length > 0 ? (
+              {agents && agents.length > 0 ? (
                 <div className="bar-chart">
-                  {Object.entries(agentStats)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 10)
-                    .map(([agentId, count]) => (
-                    <div key={agentId} className="bar-item">
-                      <span className="bar-label">{getAgentName(agentId)}</span>
-                      <div className="bar-container">
-                        <div 
-                          className="bar" 
-                          style={{ 
-                            width: `${(count / Math.max(...Object.values(agentStats))) * 100}%` 
-                          }}
-                        />
-                        <span className="bar-value">{count}</span>
-                      </div>
-                    </div>
-                  ))}
+                  {(() => {
+                    // Criar estatísticas completas incluindo agentes sem tickets
+                    const completeAgentStats = {};
+                    
+                    // Incluir todos os agentes ativos
+                    agents.filter(agent => agent.is_active && agent.role === 'agent').forEach(agent => {
+                      completeAgentStats[agent.id] = agentStats?.[agent.id] || 0;
+                    });
+                    
+                    // Incluir agentes que têm tickets mas podem estar inativos
+                    if (agentStats) {
+                      Object.keys(agentStats).forEach(agentId => {
+                        if (!completeAgentStats[agentId]) {
+                          completeAgentStats[agentId] = agentStats[agentId];
+                        }
+                      });
+                    }
+                    
+                    const maxCount = Math.max(...Object.values(completeAgentStats), 1);
+                    
+                    return Object.entries(completeAgentStats)
+                      .sort(([,a], [,b]) => b - a)
+                      .map(([agentId, count]) => (
+                        <div key={agentId} className="bar-item">
+                          <span className="bar-label">{getAgentName(agentId)}</span>
+                          <div className="bar-container">
+                            <div 
+                              className="bar" 
+                              style={{ 
+                                width: `${(count / maxCount) * 100}%` 
+                              }}
+                            />
+                            <span className="bar-value">{count}</span>
+                          </div>
+                        </div>
+                      ));
+                  })()}
                 </div>
               ) : (
-                <p className="no-data">Nenhum dado disponível</p>
+                <p className="no-data">Nenhum agente disponível</p>
               )}
             </div>
           </div>
@@ -194,7 +223,6 @@ const AdminDashboard = () => {
                 <div className="bar-chart">
                   {Object.entries(systemStats)
                     .sort(([,a], [,b]) => b - a)
-                    .slice(0, 10)
                     .map(([system, count]) => (
                     <div key={system} className="bar-item">
                       <span className="bar-label">{system}</span>
@@ -223,7 +251,6 @@ const AdminDashboard = () => {
                 <div className="bar-chart">
                   {Object.entries(labelStats)
                     .sort(([,a], [,b]) => b - a)
-                    .slice(0, 10)
                     .map(([label, count]) => (
                     <div key={label} className="bar-item">
                       <span className="bar-label">{label}</span>
@@ -245,6 +272,7 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
