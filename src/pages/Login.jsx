@@ -62,7 +62,7 @@ const Login = () => {
                 placeholder="Digite seu usuário"
                 required
                 disabled={loading}
-                autocomplete="username"
+                autoComplete="username"
               />
             </div>
           </div>
@@ -79,7 +79,7 @@ const Login = () => {
                 placeholder="Digite sua senha"
                 required
                 disabled={loading}
-                autocomplete="current-password"
+                autoComplete="current-password"
               />
             </div>
           </div>
