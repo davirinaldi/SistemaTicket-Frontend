@@ -26,6 +26,7 @@ const AgentDashboard = () => {
     aguardando: 0
   });
   const [monthlyData, setMonthlyData] = useState([]);
+  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'finalizado', 'andamento', 'aguardando'
 
   // Hook para detectar mudanças de tamanho da tela
   useEffect(() => {
@@ -113,6 +114,41 @@ const AgentDashboard = () => {
     setMonthlyData(months);
   };
 
+  // Função para filtrar tickets baseado no status selecionado
+  const getFilteredTickets = () => {
+    switch (activeFilter) {
+      case 'finalizado':
+        return tickets.filter(ticket => ticket.status === 'Finalizado');
+      case 'andamento':
+        return tickets.filter(ticket => ticket.status === 'Em Andamento');
+      case 'aguardando':
+        return tickets.filter(ticket => ticket.status === 'Aguardando Implantação');
+      case 'all':
+      default:
+        return tickets;
+    }
+  };
+
+  // Função para lidar com clique nos cards de estatísticas
+  const handleStatCardClick = (filterType) => {
+    setActiveFilter(filterType);
+  };
+
+  // Função para obter o título da seção baseado no filtro ativo
+  const getFilterTitle = () => {
+    switch (activeFilter) {
+      case 'finalizado':
+        return 'Tickets Finalizados';
+      case 'andamento':
+        return 'Tickets Em Andamento';
+      case 'aguardando':
+        return 'Tickets Aguardando';
+      case 'all':
+      default:
+        return 'Tickets Recentes';
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -136,7 +172,11 @@ const AgentDashboard = () => {
 
         {/* Cards de Estatísticas */}
         <div className="stats-cards">
-          <div className="stat-card total">
+          <button 
+            className={`stat-card total ${activeFilter === 'all' ? 'active' : ''}`}
+            onClick={() => handleStatCardClick('all')}
+            title="Clique para ver todos os tickets"
+          >
             <div className="stat-icon">
               <TrendingUp size={24} />
             </div>
@@ -144,9 +184,13 @@ const AgentDashboard = () => {
               <h3>Total de Tickets</h3>
               <p className="stat-number">{stats.total}</p>
             </div>
-          </div>
+          </button>
 
-          <div className="stat-card completed">
+          <button 
+            className={`stat-card completed ${activeFilter === 'finalizado' ? 'active' : ''}`}
+            onClick={() => handleStatCardClick('finalizado')}
+            title="Clique para ver apenas tickets finalizados"
+          >
             <div className="stat-icon">
               <CheckCircle2 size={24} />
             </div>
@@ -154,9 +198,13 @@ const AgentDashboard = () => {
               <h3>Finalizados</h3>
               <p className="stat-number">{stats.finalizados}</p>
             </div>
-          </div>
+          </button>
 
-          <div className="stat-card in-progress">
+          <button 
+            className={`stat-card in-progress ${activeFilter === 'andamento' ? 'active' : ''}`}
+            onClick={() => handleStatCardClick('andamento')}
+            title="Clique para ver apenas tickets em andamento"
+          >
             <div className="stat-icon">
               <Clock size={24} />
             </div>
@@ -164,9 +212,13 @@ const AgentDashboard = () => {
               <h3>Em Andamento</h3>
               <p className="stat-number">{stats.emAndamento}</p>
             </div>
-          </div>
+          </button>
 
-          <div className="stat-card waiting">
+          <button 
+            className={`stat-card waiting ${activeFilter === 'aguardando' ? 'active' : ''}`}
+            onClick={() => handleStatCardClick('aguardando')}
+            title="Clique para ver apenas tickets aguardando"
+          >
             <div className="stat-icon">
               <Calendar size={24} />
             </div>
@@ -174,7 +226,7 @@ const AgentDashboard = () => {
               <h3>Aguardando</h3>
               <p className="stat-number">{stats.aguardando}</p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Gráfico de Implantações por Mês */}
@@ -190,19 +242,19 @@ const AgentDashboard = () => {
                 data={monthlyData} 
                 margin={{ 
                   top: 20, 
-                  right: isMobile ? 10 : 30, 
-                  left: isMobile ? 10 : 20, 
-                  bottom: isMobile ? 50 : 5 
+                  right: isMobile ? 15 : 30, 
+                  left: isMobile ? 15 : 20, 
+                  bottom: 80 
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                 <XAxis 
                   dataKey="mes" 
-                  tick={{ fontSize: isMobile ? 10 : 12 }}
-                  angle={isMobile ? -45 : 0}
-                  textAnchor={isMobile ? 'end' : 'middle'}
-                  height={isMobile ? 60 : 30}
-                  interval={isSmallMobile ? 2 : isMobile ? 1 : 0}
+                  tick={{ fontSize: isMobile ? 9 : 11 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={70}
+                  interval={isSmallMobile ? 3 : isMobile ? 2 : 1}
                 />
                 <YAxis 
                   tick={{ fontSize: isMobile ? 10 : 12 }}
@@ -241,25 +293,48 @@ const AgentDashboard = () => {
         {/* Resumo dos Tickets Recentes */}
         {tickets.length > 0 && (
           <div className="recent-tickets">
-            <h2>Tickets Recentes</h2>
+            <div className="recent-tickets-header">
+              <h2>{getFilterTitle()}</h2>
+              {activeFilter !== 'all' && (
+                <button 
+                  className="clear-filter-btn"
+                  onClick={() => handleStatCardClick('all')}
+                  title="Ver todos os tickets"
+                >
+                  Ver Todos
+                </button>
+              )}
+            </div>
             <div className="tickets-preview">
-              {tickets.slice(0, 5).map(ticket => (
-                <div key={ticket.id} className="ticket-preview-card">
-                  <div className="ticket-preview-info">
-                    <h4>{ticket.title}</h4>
-                    <p>Sistema: {ticket.sistema || 'N/A'}</p>
+              {getFilteredTickets().length > 0 ? (
+                getFilteredTickets().slice(0, 10).map(ticket => (
+                  <div key={ticket.id} className="ticket-preview-card">
+                    <div className="ticket-preview-info">
+                      <h4>{ticket.title}</h4>
+                      <p>Sistema: {ticket.sistema || 'N/A'}</p>
+                    </div>
+                    <div className="ticket-preview-status">
+                      <span className={`status-indicator ${
+                        ticket.status === 'Finalizado' ? 'completed' :
+                        ticket.status === 'Em Andamento' ? 'in-progress' : 'waiting'
+                      }`}>
+                        {ticket.status}
+                      </span>
+                      <small>{formatDateBrasilia(ticket.updated_at)}</small>
+                    </div>
                   </div>
-                  <div className="ticket-preview-status">
-                    <span className={`status-indicator ${
-                      ticket.status === 'Finalizado' ? 'completed' :
-                      ticket.status === 'Em Andamento' ? 'in-progress' : 'waiting'
-                    }`}>
-                      {ticket.status}
-                    </span>
-                    <small>{formatDateBrasilia(ticket.updated_at)}</small>
-                  </div>
+                ))
+              ) : (
+                <div className="no-tickets-filtered">
+                  <p>Nenhum ticket encontrado para o filtro selecionado.</p>
+                  <button 
+                    className="show-all-btn"
+                    onClick={() => handleStatCardClick('all')}
+                  >
+                    Ver Todos os Tickets
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         )}

@@ -54,12 +54,29 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+  text-align: left;
+  width: 100%;
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #e2e8f0;
+}
+
+.stat-card.active {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
+}
+
+.stat-card:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .stat-icon {
@@ -145,22 +162,22 @@
 /* Garantir que o gráfico seja legível em todas as telas */
 @media (max-width: 768px) {
   .chart-container {
-    height: 280px;
-    min-height: 260px;
+    height: 320px;
+    min-height: 300px;
   }
 }
 
 @media (max-width: 480px) {
   .chart-container {
-    height: 240px;
-    min-height: 220px;
+    height: 280px;
+    min-height: 260px;
   }
 }
 
 @media (max-width: 360px) {
   .chart-container {
-    height: 200px;
-    min-height: 180px;
+    height: 240px;
+    min-height: 220px;
   }
 }
 
@@ -188,11 +205,76 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.recent-tickets-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .recent-tickets h2 {
-  margin: 0 0 20px 0;
+  margin: 0;
   font-size: 18px;
   font-weight: 600;
   color: #1e293b;
+}
+
+.clear-filter-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.clear-filter-btn:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.no-tickets-filtered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: #64748b;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.no-tickets-filtered p {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+}
+
+.show-all-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.show-all-btn:hover {
+  background: #5a67d8;
+  transform: translateY(-1px);
 }
 
 .tickets-preview {
@@ -333,6 +415,16 @@
   .stat-number {
     font-size: 24px;
   }
+  
+  .recent-tickets-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .clear-filter-btn {
+    align-self: center;
+  }
 
   .chart-section {
     padding: 16px;
@@ -348,7 +440,7 @@
   }
 
   .chart-container {
-    height: 280px;
+    height: 320px;
     overflow-x: auto;
   }
   
@@ -405,6 +497,7 @@
   .stat-card {
     padding: 12px;
     gap: 10px;
+    min-height: 60px;
   }
   
   .stat-content h3 {
@@ -418,6 +511,25 @@
   .stat-icon {
     padding: 8px;
   }
+  
+  .recent-tickets h2 {
+    font-size: 16px;
+  }
+  
+  .clear-filter-btn,
+  .show-all-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+  
+  .no-tickets-filtered {
+    padding: 30px 16px;
+  }
+  
+  .no-tickets-filtered p {
+    font-size: 13px;
+  }
+}
   
   .chart-section {
     padding: 12px;
@@ -433,7 +545,7 @@
   }
   
   .chart-container {
-    height: 240px;
+    height: 280px;
     min-width: 100%;
   }
   
@@ -460,7 +572,7 @@
   }
   
   .chart-container {
-    height: 220px;
+    height: 240px;
   }
   
   .stat-number {
