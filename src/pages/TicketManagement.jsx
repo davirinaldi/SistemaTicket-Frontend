@@ -36,6 +36,7 @@ const TicketManagement = () => {
   const [loading, setLoading] = useState(true);
   const [selectedAgent, setSelectedAgent] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [selectedLabel, setSelectedLabel] = useState('');
   const [selectedSystem, setSelectedSystem] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
@@ -66,9 +67,23 @@ const TicketManagement = () => {
   const [availableSystems, setAvailableSystems] = useState([]);
   const [availableStatuses] = useState(['Aguardando Implantação', 'Em Andamento', 'Finalizado']);
 
+  // Debounce para o campo de busca
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms de delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Resetar página quando filtros mudarem (exceto currentPage)
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedAgent, debouncedSearchTerm, selectedStatus, selectedLabel, selectedSystem]);
+
   useEffect(() => {
     loadData();
-  }, [currentPage, selectedAgent, searchTerm, selectedStatus, selectedLabel, selectedSystem]);
+  }, [currentPage, selectedAgent, debouncedSearchTerm, selectedStatus, selectedLabel, selectedSystem]);
 
   useEffect(() => {
     // Carregar valores únicos para filtros de todos os tickets
@@ -98,7 +113,7 @@ const TicketManagement = () => {
       };
       
       if (selectedAgent) params.agente_id = selectedAgent;
-      if (searchTerm) params.search = searchTerm;
+      if (debouncedSearchTerm) params.search = debouncedSearchTerm;
       if (selectedStatus) params.status = selectedStatus;
       if (selectedLabel) params.label = selectedLabel;
       if (selectedSystem) params.sistema = selectedSystem;
@@ -130,6 +145,7 @@ const TicketManagement = () => {
   const clearFilters = () => {
     setSelectedAgent('');
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setSelectedLabel('');
     setSelectedSystem('');
     setSelectedStatus('');

@@ -185,10 +185,21 @@ const AttachmentUpload = ({
               <div className="attachment-info">
                 <div className="attachment-name">
                   <a 
-                    href={attachment.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
+                    href="#" 
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      
+                      try {
+                        const response = await ticketsAPI.getDownloadUrl(ticketId, id);
+                        const { downloadUrl } = response.data;
+                        window.open(downloadUrl, '_blank');
+                      } catch (error) {
+                        console.error('Erro ao obter URL de download:', error);
+                        alert('Erro ao abrir anexo. Tente novamente.');
+                      }
+                    }}
                     title="Abrir arquivo"
+                    style={{ cursor: 'pointer' }}
                   >
                     {attachment.fileName}
                   </a>

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -59,6 +59,7 @@ export const ticketsAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getAttachments: (ticketId) => api.get(`/tickets/${ticketId}/checklist/attachments`),
+  getDownloadUrl: (ticketId, attachmentId) => api.get(`/tickets/${ticketId}/attachments/${attachmentId}/download`),
   deleteAttachment: (ticketId, attachmentId) => api.delete(`/tickets/${ticketId}/checklist/attachments/${attachmentId}`),
   delete: (id) => api.delete(`/trello-cards/${id}`),
 };
