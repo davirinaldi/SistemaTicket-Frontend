@@ -675,17 +675,21 @@
   }
   
   .board-columns::-webkit-scrollbar {
-    height: 6px;
+    height: 8px;
   }
   
   .board-columns::-webkit-scrollbar-track {
-    background: #f1f5f9;
+    background: #e2e8f0;
     border-radius: 3px;
   }
   
   .board-columns::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
+    background: #64748b;
     border-radius: 3px;
+  }
+  
+  .board-columns::-webkit-scrollbar-thumb:hover {
+    background: #475569;
   }
   
   .board-column {
@@ -834,6 +838,26 @@
   .ticket-count {
     font-size: 0.65rem;
     padding: 1px 4px;
+  }
+  
+  /* Scrollbar mais visível em mobile */
+  .board-columns::-webkit-scrollbar {
+    height: 10px;
+  }
+  
+  .board-columns::-webkit-scrollbar-track {
+    background: #cbd5e1;
+    border-radius: 5px;
+  }
+  
+  .board-columns::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 5px;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .board-columns::-webkit-scrollbar-thumb:active {
+    background: #1f2937;
   }
   
   .modal-content {
