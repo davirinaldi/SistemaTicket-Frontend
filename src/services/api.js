@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -85,6 +85,23 @@ export const adminAPI = {
   updateUser: (id, userData) => api.patch(`/admin/update-user/${id}`, userData),
   deleteUser: (id) => api.delete(`/admin/delete-user/${id}`),
   toggleUserStatus: (id, is_active) => api.patch(`/admin/toggle-user-status/${id}`, { is_active }),
+  
+  // Gerenciamento de serviços
+  getAllServices: (params = {}) => api.get('/admin/services', { params }),
+  getService: (id) => api.get(`/admin/services/${id}`),
+  getServiceByControlId: (controlId) => api.get(`/admin/services/control/${controlId}`),
+  createService: (data) => api.post('/admin/services', data),
+  updateService: (id, data) => api.put(`/admin/services/${id}`, data),
+  deleteService: (id) => api.delete(`/admin/services/${id}`),
+  getServicesByAgent: (agentId) => api.get(`/admin/services/agent/${agentId}`),
+  getServiceStats: () => api.get('/admin/services/stats'),
+  getUpcomingVisits: (days = 7) => api.get('/admin/services/upcoming-visits', { params: { days } }),
+};
+
+// ===== SERVIÇOS PARA AGENTES =====
+export const servicesAPI = {
+  getMyServices: () => api.get('/services/my-services'),
+  updateService: (id, data) => api.put(`/services/${id}`, data),
 };
 
 // ===== SINCRONIZAÇÃO =====

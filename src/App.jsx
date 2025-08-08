@@ -8,6 +8,7 @@ import AgentBoard from './components/AgentBoard';
 import AdminDashboard from './pages/AdminDashboard';
 import AgentManagement from './pages/AgentManagement';
 import TicketManagement from './pages/TicketManagement';
+import ServiceManagement from './pages/ServiceManagement';
 import './App.css';
 
 const AppRoutes = () => {
@@ -77,6 +78,15 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requireAdmin>
             <TicketManagement />
+          </ProtectedRoute>
+        } 
+      />
+      
+      <Route 
+        path="/admin/services" 
+        element={
+          <ProtectedRoute requireAdmin>
+            <ServiceManagement />
           </ProtectedRoute>
         } 
       />

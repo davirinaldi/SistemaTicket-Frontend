@@ -1,6 +1,6 @@
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, User, Settings, Home, Users, FileText, Shield, Calendar } from 'lucide-react';
+import { LogOut, User, Settings, Home, Users, FileText, Shield, Calendar, Wrench } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -31,6 +31,11 @@ const Header = () => {
         path: '/admin/agents',
         label: 'Agentes',
         icon: Users
+      },
+      {
+        path: '/admin/services',
+        label: 'Serviços',
+        icon: Wrench
       }
     );
   } else {

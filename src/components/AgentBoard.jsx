@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { ticketsAPI } from '../services/api';
+import { ticketsAPI, servicesAPI } from '../services/api';
 import { formatDateOnlyBrasilia } from '../utils/dateUtils';
 import { 
   createChecklistForTicket, 
@@ -20,7 +20,10 @@ import {
   X,
   Save,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Filter,
+  Wrench,
+  FileText
 } from 'lucide-react';
 import Header from './Header';
 import AttachmentUpload from './AttachmentUpload';
@@ -29,8 +32,11 @@ import './AgentBoard.css';
 const AgentBoard = () => {
   const { user } = useAuth();
   const [tickets, setTickets] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('both'); // 'tickets', 'services', 'both'
   const [selectedTicket, setSelectedTicket] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
   const [editingChecklist, setEditingChecklist] = useState(false);
   const [checklist, setChecklist] = useState({});
   const [expandedCategories, setExpandedCategories] = useState({});
@@ -38,18 +44,25 @@ const AgentBoard = () => {
   const [attachments, setAttachments] = useState({});
 
   useEffect(() => {
-    loadTickets();
+    loadData();
   }, [user]);
 
-  const loadTickets = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const response = await ticketsAPI.getByAgent(user.id);
-      setTickets(response.data || []);
+      
+      // Carregar tickets e serviços em paralelo
+      const [ticketsResponse, servicesResponse] = await Promise.all([
+        ticketsAPI.getByAgent(user.id),
+        servicesAPI.getMyServices()
+      ]);
+      
+      setTickets(ticketsResponse.data || []);
+      setServices(servicesResponse.data || []);
     } catch (error) {
       setMessage({
         type: 'error',
-        text: 'Erro ao carregar tickets: ' + (error.response?.data?.error || error.message)
+        text: 'Erro ao carregar dados: ' + (error.response?.data?.error || error.message)
       });
     } finally {
       setLoading(false);
@@ -85,6 +98,30 @@ const AgentBoard = () => {
       setMessage({
         type: 'error',
         text: 'Erro ao mover ticket: ' + (error.response?.data?.error || error.message)
+      });
+    }
+  };
+
+  const updateService = async (serviceId, newStatus, notes = null) => {
+    try {
+      const updateData = { status: newStatus };
+      if (notes !== null) updateData.notes = notes;
+      
+      await servicesAPI.updateService(serviceId, updateData);
+      
+      // Atualiza o serviço na lista
+      setServices(prev => prev.map(s => 
+        s.id === serviceId ? { ...s, ...updateData } : s
+      ));
+      
+      setMessage({
+        type: 'success',
+        text: `Serviço atualizado para "${newStatus}"`
+      });
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: 'Erro ao atualizar serviço: ' + (error.response?.data?.error || error.message)
       });
     }
   };
@@ -157,6 +194,14 @@ const AgentBoard = () => {
     setChecklist({});
     setExpandedCategories({});
     setAttachments({});
+  };
+
+  const openServiceModal = (service) => {
+    setSelectedService(service);
+  };
+
+  const closeServiceModal = () => {
+    setSelectedService(null);
   };
 
   const startEditingChecklist = () => {
@@ -327,7 +372,7 @@ const AgentBoard = () => {
     return (
       <div className="loading-container">
         <div className="loading-spinner" />
-        <p>Carregando seus tickets...</p>
+        <p>Carregando seus dados...</p>
       </div>
     );
   }
@@ -338,15 +383,49 @@ const AgentBoard = () => {
     'Finalizado': tickets.filter(t => t.status === 'Finalizado'),
   };
 
+  const servicesByStatus = {
+    'Pendente': services.filter(s => s.status === 'Pendente'),
+    'Em Andamento': services.filter(s => s.status === 'Em Andamento'),
+    'Finalizado': services.filter(s => s.status === 'Finalizado'),
+  };
+
+  const shouldShowTickets = viewMode === 'tickets' || viewMode === 'both';
+  const shouldShowServices = viewMode === 'services' || viewMode === 'both';
+
   return (
     <div className="agent-board">
       <Header />
       
       <div className="board-content">
         <div className="board-header">
-          <h1>Meus Tickets</h1>
-          <div className="board-stats">
-            <span>Total: {tickets.length}</span>
+          <h1>Minha Área</h1>
+          <div className="view-controls">
+            <div className="view-mode-selector">
+              <button 
+                className={`mode-button ${viewMode === 'tickets' ? 'active' : ''}`}
+                onClick={() => setViewMode('tickets')}
+                title="Apenas Tickets"
+              >
+                <FileText size={16} />
+                Tickets ({tickets.length})
+              </button>
+              <button 
+                className={`mode-button ${viewMode === 'services' ? 'active' : ''}`}
+                onClick={() => setViewMode('services')}
+                title="Apenas Serviços"
+              >
+                <Wrench size={16} />
+                Serviços ({services.length})
+              </button>
+              <button 
+                className={`mode-button ${viewMode === 'both' ? 'active' : ''}`}
+                onClick={() => setViewMode('both')}
+                title="Tickets e Serviços"
+              >
+                <Filter size={16} />
+                Ambos
+              </button>
+            </div>
           </div>
         </div>
 
@@ -359,22 +438,40 @@ const AgentBoard = () => {
         )}
 
         <div className="board-columns">
-          {Object.entries(ticketsByStatus).map(([status, statusTickets]) => (
-            <div key={status} className={`board-column ${getStatusColor(status)}`}>
-              <div className="column-header">
-                {getStatusIcon(status)}
-                <h2>{status}</h2>
-                <span className="ticket-count">{statusTickets.length}</span>
-              </div>
+          {['Aguardando Implantação', 'Em Andamento', 'Finalizado'].map((status) => {
+            // Obter items para esta coluna baseado no modo de visualização
+            const statusTickets = shouldShowTickets ? ticketsByStatus[status] || [] : [];
+            const serviceStatus = status === 'Aguardando Implantação' ? 'Pendente' : status;
+            const statusServices = shouldShowServices ? servicesByStatus[serviceStatus] || [] : [];
+            const totalItems = statusTickets.length + statusServices.length;
+            
+            // Sempre mostrar todas as colunas, independente do filtro
+            // Para manter consistência visual
+            
+            return (
+              <div key={status} className={`board-column ${getStatusColor(status)}`}>
+                <div className="column-header">
+                  {getStatusIcon(status)}
+                  <h2>
+                    {status === 'Aguardando Implantação' && shouldShowServices && shouldShowTickets
+                      ? 'Aguardando/Pendente'
+                      : status === 'Aguardando Implantação' && shouldShowServices 
+                      ? 'Pendente'
+                      : status
+                    }
+                  </h2>
+                  <span className="ticket-count">{totalItems}</span>
+                </div>
 
-              <div className="column-content">
-                {statusTickets.length === 0 ? (
-                  <div className="empty-column">
-                    <p>Nenhum ticket neste status</p>
-                  </div>
-                ) : (
-                  statusTickets.map((ticket) => (
-                    <div key={ticket.id} className="ticket-card">
+                <div className="column-content">
+                  {/* Tickets */}
+                  {shouldShowTickets && statusTickets.map((ticket) => (
+                    <div key={`ticket-${ticket.id}`} className="ticket-card">
+                      <div className="card-type-badge tickets">
+                        <FileText size={12} />
+                        Ticket
+                      </div>
+                      
                       <div className="ticket-header">
                         <div className="ticket-id">
                           {ticket.ticket || `#${ticket.id}`}
@@ -440,11 +537,87 @@ const AgentBoard = () => {
                         )}
                       </div>
                     </div>
-                  ))
-                )}
+                  ))}
+                  
+                  {/* Serviços */}
+                  {shouldShowServices && statusServices.map((service) => (
+                    <div key={`service-${service.id}`} className="ticket-card service-card">
+                      <div className="card-type-badge services">
+                        <Wrench size={12} />
+                        Serviço
+                      </div>
+                      
+                      <div className="ticket-header">
+                        <div className="ticket-id">
+                          {service.control_id}
+                        </div>
+                        <button
+                          onClick={() => openServiceModal(service)}
+                          className="ticket-action view"
+                          title="Ver detalhes"
+                        >
+                          <Edit size={14} />
+                        </button>
+                      </div>
+
+                      <h3 className="ticket-title">{service.client_name}</h3>
+                      <p className="service-description">{service.service_description}</p>
+
+                      <div className="ticket-date">
+                        <Calendar size={12} />
+                        <span>{new Date(service.opened_date).toLocaleDateString('pt-BR')}</span>
+                      </div>
+
+                      <div className="ticket-actions">
+                        {serviceStatus === 'Pendente' && (
+                          <button
+                            onClick={() => updateService(service.id, 'Em Andamento')}
+                            className="action-button start"
+                          >
+                            <Play size={14} />
+                            Iniciar
+                          </button>
+                        )}
+                        
+                        {serviceStatus === 'Em Andamento' && (
+                          <>
+                            <button
+                              onClick={() => updateService(service.id, 'Pendente')}
+                              className="action-button back"
+                            >
+                              <Clock size={14} />
+                              Voltar
+                            </button>
+                            <button
+                              onClick={() => updateService(service.id, 'Finalizado')}
+                              className="action-button finish"
+                            >
+                              <CheckCircle2 size={14} />
+                              Finalizar
+                            </button>
+                          </>
+                        )}
+                        
+                        {serviceStatus === 'Finalizado' && (
+                          <div className="finalized-ticket">
+                            <CheckCircle2 size={14} />
+                            <span>Concluído</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {/* Mensagem quando vazio */}
+                  {totalItems === 0 && (
+                    <div className="empty-column">
+                      <p>Nenhum item neste status</p>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          }).filter(Boolean)}
         </div>
       </div>
 
@@ -602,6 +775,141 @@ const AgentBoard = () => {
                 disabled={false}
               />
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de detalhes do serviço */}
+      {selectedService && (
+        <div className="modal-overlay" onClick={closeServiceModal}>
+          <div className="modal-content service-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Detalhes do Serviço</h2>
+              <button onClick={closeServiceModal} className="modal-close">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="service-detail-section">
+                <h3>Informações Básicas</h3>
+                <div className="detail-grid">
+                  <div className="detail-item">
+                    <strong>ID de Controle:</strong>
+                    <span>{selectedService.control_id}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Cliente:</strong>
+                    <span>{selectedService.client_name}</span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Status:</strong>
+                    <span className={`status-badge service-${selectedService.status?.toLowerCase()?.replace(/\s+/g, '-')}`}>
+                      {selectedService.status}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <strong>Data de Abertura:</strong>
+                    <span>
+                      {selectedService.opened_date
+                        ? new Date(selectedService.opened_date).toLocaleDateString('pt-BR')
+                        : 'N/A'
+                      }
+                    </span>
+                  </div>
+                  {selectedService.visit_date && (
+                    <div className="detail-item">
+                      <strong>Data da Visita:</strong>
+                      <span>
+                        {new Date(selectedService.visit_date).toLocaleDateString('pt-BR')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="service-detail-section">
+                <h3>Descrição do Serviço</h3>
+                <p className="service-description-full">
+                  {selectedService.service_description}
+                </p>
+              </div>
+
+              <div className="service-detail-section">
+                <h3>Contatos</h3>
+                <div className="contact-grid">
+                  <div className="contact-item">
+                    <strong>Telefone:</strong>
+                    <span>{selectedService.phone || 'Não informado'}</span>
+                  </div>
+                  <div className="contact-item">
+                    <strong>Email:</strong>
+                    <span>{selectedService.email || 'Não informado'}</span>
+                  </div>
+                  <div className="contact-item">
+                    <strong>WhatsApp:</strong>
+                    <span>{selectedService.whatsapp || 'Não informado'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="service-detail-section">
+                <h3>Observações</h3>
+                <p className="service-notes">
+                  {selectedService.notes || 'Nenhuma observação'}
+                </p>
+              </div>
+
+              <div className="service-detail-section">
+                <h3>Ações</h3>
+                <div className="service-actions-modal">
+                  {selectedService.status === 'Pendente' && (
+                    <button
+                      onClick={() => {
+                        updateService(selectedService.id, 'Em Andamento');
+                        setSelectedService({...selectedService, status: 'Em Andamento'});
+                      }}
+                      className="action-button start"
+                    >
+                      <Play size={16} />
+                      Iniciar Serviço
+                    </button>
+                  )}
+                  
+                  {selectedService.status === 'Em Andamento' && (
+                    <>
+                      <button
+                        onClick={() => {
+                          updateService(selectedService.id, 'Pendente');
+                          setSelectedService({...selectedService, status: 'Pendente'});
+                        }}
+                        className="action-button back"
+                      >
+                        <Clock size={16} />
+                        Voltar para Pendente
+                      </button>
+                      <button
+                        onClick={() => {
+                          updateService(selectedService.id, 'Finalizado');
+                          setSelectedService({...selectedService, status: 'Finalizado'});
+                        }}
+                        className="action-button finish"
+                      >
+                        <CheckCircle2 size={16} />
+                        Finalizar Serviço
+                      </button>
+                    </>
+                  )}
+                  
+                  {selectedService.status === 'Finalizado' && (
+                    <div className="finalized-service">
+                      <CheckCircle2 size={16} />
+                      <span>Serviço Finalizado</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -24,6 +24,46 @@
   margin: 0;
 }
 
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.view-mode-selector {
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.mode-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mode-button:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.mode-button.active {
+  background: #3b82f6;
+  color: white;
+}
+
 .board-stats {
   color: #64748b;
   font-size: 0.9rem;
@@ -232,6 +272,8 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  position: relative;
+  z-index: 3;
 }
 
 .ticket-action.view {
@@ -399,12 +441,186 @@
   padding: 24px;
 }
 
+/* Card Type Badge */
+.card-type-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.card-type-badge.tickets {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.card-type-badge.services {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Service Card Styles */
+.service-card {
+  position: relative;
+  border-left: 4px solid #f59e0b !important;
+}
+
+.service-card .ticket-title {
+  margin-bottom: 8px;
+}
+
+.service-description {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 8px 0 12px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* Espaçamento para cards de serviço */
+.service-card .ticket-date {
+  margin-top: auto;
+}
+
+.service-card .ticket-actions {
+  margin-top: 8px;
+}
+
+/* Service Modal Styles */
+.service-modal-content {
+  width: 100%;
+  max-width: 650px;
+}
+
+.service-detail-section {
+  margin-bottom: 24px;
+}
+
+.service-detail-section:last-child {
+  margin-bottom: 0;
+}
+
+.service-detail-section h3 {
+  color: #1e293b;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.service-description-full {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  color: #374151;
+  line-height: 1.5;
+  max-height: 120px;
+  overflow-y: auto;
+  word-wrap: break-word;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.contact-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.contact-item strong {
+  color: #374151;
+  font-size: 0.85rem;
+}
+
+.contact-item span {
+  color: #6b7280;
+}
+
+.service-notes {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  color: #374151;
+  line-height: 1.5;
+  max-height: 100px;
+  overflow-y: auto;
+  word-wrap: break-word;
+}
+
+.service-actions-modal {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.finalized-service {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  color: #166534;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+/* Service Status Badges */
+.status-badge.service-pendente {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-badge.service-em-andamento {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.service-finalizado {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.status-badge.service-cancelado {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .ticket-detail-section {
   margin-bottom: 24px;
 }
 
 .ticket-detail-section:last-child {
   margin-bottom: 0;
+}
+
+/* Scroll na descrição dos tickets */
+.ticket-description {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 6px;
+  color: #374151;
+  line-height: 1.5;
+  max-height: 120px;
+  overflow-y: auto;
+  word-wrap: break-word;
+  margin: 0;
 }
 
 .ticket-detail-section h3 {
