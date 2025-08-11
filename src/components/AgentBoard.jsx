@@ -565,7 +565,16 @@ const AgentBoard = () => {
 
                       <div className="ticket-date">
                         <Calendar size={12} />
-                        <span>{new Date(service.opened_date).toLocaleDateString('pt-BR')}</span>
+                        <span>{(() => {
+                          if (!service.opened_date) return '-';
+                          // Para datas YYYY-MM-DD, força interpretação local
+                          if (typeof service.opened_date === 'string' && service.opened_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            const [year, month, day] = service.opened_date.split('-');
+                            const date = new Date(year, month - 1, day);
+                            return date.toLocaleDateString('pt-BR');
+                          }
+                          return new Date(service.opened_date).toLocaleDateString('pt-BR');
+                        })()}</span>
                       </div>
 
                       <div className="ticket-actions">
@@ -812,17 +821,32 @@ const AgentBoard = () => {
                   <div className="detail-item">
                     <strong>Data de Abertura:</strong>
                     <span>
-                      {selectedService.opened_date
-                        ? new Date(selectedService.opened_date).toLocaleDateString('pt-BR')
-                        : 'N/A'
-                      }
+                      {(() => {
+                        if (!selectedService.opened_date) return 'N/A';
+                        // Para datas YYYY-MM-DD, força interpretação local
+                        if (typeof selectedService.opened_date === 'string' && selectedService.opened_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                          const [year, month, day] = selectedService.opened_date.split('-');
+                          const date = new Date(year, month - 1, day);
+                          return date.toLocaleDateString('pt-BR');
+                        }
+                        return new Date(selectedService.opened_date).toLocaleDateString('pt-BR');
+                      })()}
                     </span>
                   </div>
                   {selectedService.visit_date && (
                     <div className="detail-item">
                       <strong>Data da Visita:</strong>
                       <span>
-                        {new Date(selectedService.visit_date).toLocaleDateString('pt-BR')}
+                        {(() => {
+                          if (!selectedService.visit_date) return '-';
+                          // Para datas YYYY-MM-DD, força interpretação local
+                          if (typeof selectedService.visit_date === 'string' && selectedService.visit_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                            const [year, month, day] = selectedService.visit_date.split('-');
+                            const date = new Date(year, month - 1, day);
+                            return date.toLocaleDateString('pt-BR');
+                          }
+                          return new Date(selectedService.visit_date).toLocaleDateString('pt-BR');
+                        })()}
                       </span>
                     </div>
                   )}

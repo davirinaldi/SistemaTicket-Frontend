@@ -287,6 +287,15 @@ const ServiceManagement = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
+    
+    // Para datas que vêm apenas como YYYY-MM-DD (sem timezone)
+    // força interpretação local para evitar problema de timezone
+    if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-');
+      const date = new Date(year, month - 1, day);
+      return date.toLocaleDateString('pt-BR');
+    }
+    
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
