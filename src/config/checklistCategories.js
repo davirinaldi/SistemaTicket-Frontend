@@ -129,7 +129,12 @@ export const CHECKLIST_CATEGORIES_CLOUD = {
     items: [
       { id: 'cloud_cancelamento_vendas', text: 'Cancelamento de Vendas', completed: false },
       { id: 'cloud_multiplas_formas_pagamento', text: 'Múltiplas Formas de Pagamento', completed: false },
-      { id: 'cloud_emissao_drogarias', text: 'Emissão de Drogarias', completed: false }
+      { id: 'cloud_emissao_drogarias', text: 'Emissão de Drogarias', completed: false },
+      { id: 'cloud_emissao_nfe', text: 'Emissão de NFE', completed: false },
+      { id: 'cloud_pre_venda_balcao', text: 'Pré-Venda / Venda Balcão', completed: false },
+      { id: 'cloud_venda_cupom', text: 'Venda com Cupom', completed: false },
+      { id: 'cloud_reimpressao_notas', text: 'Reimpressão de Notas', completed: false },
+      { id: 'cloud_relatorios_vendas', text: 'Relatórios de Vendas Diversos', completed: false }
     ]
   },
   'tele_entrega': {
@@ -147,6 +152,24 @@ export const CHECKLIST_CATEGORIES_CLOUD = {
     items: [
       { id: 'cloud_desconto_produto', text: 'Desconto por Produto', completed: false },
       { id: 'cloud_nao_utiliza_descontos', text: '❌ Não utiliza', completed: false }
+    ]
+  },
+  'venda_clientes': {
+    id: 'venda_clientes',
+    name: '4 - Venda Clientes',
+    items: [
+      { id: 'cloud_venda_crediario_convenio', text: 'Venda Crediário/Convenio', completed: false },
+      { id: 'cloud_contas_receber', text: 'Contas a Receber', completed: false }
+    ]
+  },
+  'vendas_parceiros': {
+    id: 'vendas_parceiros',
+    name: '4 - Vendas Parceiros',
+    items: [
+      { id: 'cloud_farmacia_popular', text: 'Farmácia Popular', completed: false },
+      { id: 'cloud_funcional_card', text: 'Funcional Card', completed: false },
+      { id: 'cloud_portal_drogarias', text: 'Portal Drogarias', completed: false },
+      { id: 'cloud_nao_utiliza_parceiros', text: '❌ Não Utiliza', completed: false }
     ]
   },
   'compras': {
