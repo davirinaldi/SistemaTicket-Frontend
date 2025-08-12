@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import './CreateTicketModal.css'; // Reusar os mesmos estilos
 
@@ -23,6 +23,20 @@ const EditTicketModal = ({ ticket, onClose, onSave }) => {
   const [newLabel, setNewLabel] = useState('');
   const [newChecklistItem, setNewChecklistItem] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
 
   const availableLabels = [
     'Pentaho',

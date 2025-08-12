@@ -109,6 +109,21 @@ const ServiceManagement = () => {
     };
   }, [showAgentDropdown]);
 
+  // Fechar modal com ESC
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && showModal) {
+        closeModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showModal]);
+
   const loadData = async () => {
     try {
       setLoading(true);
