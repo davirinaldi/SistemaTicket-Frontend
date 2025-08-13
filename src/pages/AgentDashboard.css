@@ -10,9 +10,6 @@
 }
 
 .dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   margin-bottom: 32px;
 }
 
@@ -27,38 +24,6 @@
   margin: 0;
   font-size: 28px;
   font-weight: 600;
-}
-
-.suggestion-button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 20px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.suggestion-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-}
-
-.success-message {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background-color: #dcfce7;
-  color: #166534;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  margin-bottom: 24px;
-  font-weight: 500;
 }
 
 /* Cards de Estatísticas */
