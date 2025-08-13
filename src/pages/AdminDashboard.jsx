@@ -13,9 +13,11 @@ import {
   Trash2,
   Eye,
   EyeOff,
-  Wrench
+  Wrench,
+  MessageSquare
 } from 'lucide-react';
 import Header from '../components/Header';
+import SuggestionsModal from '../components/SuggestionsModal';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -24,6 +26,8 @@ const AdminDashboard = () => {
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [suggestionsModalOpen, setSuggestionsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
     loadDashboardData();
@@ -68,6 +72,11 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSuggestionSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -92,15 +101,31 @@ const AdminDashboard = () => {
       <div className="dashboard-content">
         <div className="dashboard-header">
           <h1>Dashboard Administrativo</h1>
-          <button 
-            onClick={handleSync} 
-            disabled={syncLoading}
-            className="sync-button"
-          >
-            <RefreshCw size={18} className={syncLoading ? 'spinning' : ''} />
-            {syncLoading ? 'Sincronizando...' : 'Sincronizar'}
-          </button>
+          <div className="dashboard-actions">
+            <button 
+              onClick={() => setSuggestionsModalOpen(true)}
+              className="suggestion-button"
+            >
+              <MessageSquare size={18} />
+              Deixar Sugestão
+            </button>
+            <button 
+              onClick={handleSync} 
+              disabled={syncLoading}
+              className="sync-button"
+            >
+              <RefreshCw size={18} className={syncLoading ? 'spinning' : ''} />
+              {syncLoading ? 'Sincronizando...' : 'Sincronizar'}
+            </button>
+          </div>
         </div>
+
+        {successMessage && (
+          <div className="sync-result success">
+            <CheckCircle size={16} />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {syncResult && (
           <div className={`sync-result ${syncResult.success ? 'success' : 'error'}`}>
@@ -274,6 +299,13 @@ const AdminDashboard = () => {
         </div>
 
       </div>
+
+      <SuggestionsModal
+        isOpen={suggestionsModalOpen}
+        onClose={() => setSuggestionsModalOpen(false)}
+        onSuccess={handleSuggestionSuccess}
+        dashboard="admin"
+      />
     </div>
   );
 };

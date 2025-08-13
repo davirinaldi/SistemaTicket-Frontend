@@ -8,9 +8,11 @@ import {
   TrendingUp, 
   CheckCircle2, 
   Clock, 
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import Header from '../components/Header';
+import SuggestionsModal from '../components/SuggestionsModal';
 import './AgentDashboard.css';
 
 const AgentDashboard = () => {
@@ -27,6 +29,8 @@ const AgentDashboard = () => {
   });
   const [monthlyData, setMonthlyData] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'finalizado', 'andamento', 'aguardando'
+  const [suggestionsModalOpen, setSuggestionsModalOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Hook para detectar mudanças de tamanho da tela
   useEffect(() => {
@@ -149,6 +153,11 @@ const AgentDashboard = () => {
     }
   };
 
+  const handleSuggestionSuccess = (message) => {
+    setSuccessMessage(message);
+    setTimeout(() => setSuccessMessage(''), 5000);
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -168,7 +177,21 @@ const AgentDashboard = () => {
             <Home size={24} />
             <h1>Dashboard - {user?.name}</h1>
           </div>
+          <button 
+            onClick={() => setSuggestionsModalOpen(true)}
+            className="suggestion-button"
+          >
+            <MessageSquare size={18} />
+            Deixar Sugestão
+          </button>
         </div>
+
+        {successMessage && (
+          <div className="success-message">
+            <CheckCircle2 size={16} />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {/* Cards de Estatísticas */}
         <div className="stats-cards">
@@ -339,6 +362,13 @@ const AgentDashboard = () => {
           </div>
         )}
       </div>
+
+      <SuggestionsModal
+        isOpen={suggestionsModalOpen}
+        onClose={() => setSuggestionsModalOpen(false)}
+        onSuccess={handleSuggestionSuccess}
+        dashboard="agent"
+      />
     </div>
   );
 };

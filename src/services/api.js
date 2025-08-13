@@ -112,4 +112,10 @@ export const syncAPI = {
   test: () => api.get('/sync/test'),
 };
 
+// ===== SUGESTÕES =====
+export const suggestionsAPI = {
+  create: (suggestion, dashboard) => api.post('/suggestions', { suggestion, dashboard }),
+  getAll: (params = {}) => api.get('/admin/suggestions', { params }),
+};
+
 export default api;
