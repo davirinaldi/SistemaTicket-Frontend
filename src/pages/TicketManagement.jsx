@@ -221,6 +221,23 @@ const TicketManagement = () => {
     setAttachments({});
   };
 
+  // useEffect para detectar ESC no modal de detalhes
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && selectedTicket) {
+        closeTicketModal();
+      }
+    };
+
+    if (selectedTicket) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedTicket]);
+
   // Funções do checklist
   const startEditingChecklist = () => {
     setEditingChecklist(true);
@@ -683,8 +700,8 @@ const TicketManagement = () => {
 
       {/* Modal de detalhes do ticket */}
       {selectedTicket && (
-        <div className="modal-overlay" onClick={closeTicketModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2>Detalhes do Ticket</h2>
               <button
@@ -847,12 +864,12 @@ const TicketManagement = () => {
                                         {item.text}
                                       </label>
                                       {editingChecklist ? (
-                                        <input
-                                          type="text"
+                                        <textarea
                                           value={item.textValue || ''}
                                           onChange={(e) => updateChecklistItem(categoryId, item.id, 'textValue', e.target.value)}
                                           placeholder="Digite aqui..."
                                           className="text-input"
+                                          rows="3"
                                         />
                                       ) : (
                                         <div className="text-display">

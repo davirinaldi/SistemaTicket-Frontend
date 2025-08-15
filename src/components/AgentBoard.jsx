@@ -204,6 +204,27 @@ const AgentBoard = () => {
     setSelectedService(null);
   };
 
+  // useEffect para detectar ESC nos modais
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        if (selectedTicket) {
+          closeTicketModal();
+        } else if (selectedService) {
+          closeServiceModal();
+        }
+      }
+    };
+
+    if (selectedTicket || selectedService) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedTicket, selectedService]);
+
   const startEditingChecklist = () => {
     setEditingChecklist(true);
   };
@@ -632,8 +653,8 @@ const AgentBoard = () => {
 
       {/* Modal de detalhes do ticket */}
       {selectedTicket && (
-        <div className="modal-overlay" onClick={closeTicketModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content">
             <div className="modal-header">
               <h2>Detalhes do Ticket</h2>
               <button onClick={closeTicketModal} className="modal-close">
@@ -750,12 +771,12 @@ const AgentBoard = () => {
                                         {item.text}
                                       </label>
                                       {editingChecklist ? (
-                                        <input
-                                          type="text"
+                                        <textarea
                                           value={item.textValue || ''}
                                           onChange={(e) => updateChecklistItem(categoryId, item.id, 'textValue', e.target.value)}
                                           placeholder="Digite aqui..."
                                           className="text-input"
+                                          rows="3"
                                         />
                                       ) : (
                                         <div className="text-display">
@@ -791,8 +812,8 @@ const AgentBoard = () => {
 
       {/* Modal de detalhes do serviço */}
       {selectedService && (
-        <div className="modal-overlay" onClick={closeServiceModal}>
-          <div className="modal-content service-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content service-modal-content">
             <div className="modal-header">
               <h2>Detalhes do Serviço</h2>
               <button onClick={closeServiceModal} className="modal-close">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Tag, 
@@ -97,6 +97,23 @@ const TicketCard = ({ ticket, onUpdate, showAgent = false }) => {
     setChecklist({});
     setExpandedCategories({});
   };
+
+  // useEffect para detectar ESC no modal de checklist
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && showChecklistModal) {
+        closeChecklistModal();
+      }
+    };
+
+    if (showChecklistModal) {
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showChecklistModal]);
 
   const startEditingChecklist = () => {
     setEditingChecklist(true);
@@ -314,8 +331,8 @@ const TicketCard = ({ ticket, onUpdate, showAgent = false }) => {
 
       {/* Modal do Checklist */}
       {showChecklistModal && (
-        <div className="modal-overlay" onClick={closeChecklistModal}>
-          <div className="modal-content checklist-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay">
+          <div className="modal-content checklist-modal">
             <div className="modal-header">
               <h2>Checklist - {ticket.title}</h2>
               <button onClick={closeChecklistModal} className="modal-close">
@@ -393,12 +410,12 @@ const TicketCard = ({ ticket, onUpdate, showAgent = false }) => {
                                       {item.text}
                                     </label>
                                     {editingChecklist ? (
-                                      <input
-                                        type="text"
+                                      <textarea
                                         value={item.textValue || ''}
                                         onChange={(e) => updateChecklistItem(categoryId, item.id, 'textValue', e.target.value)}
                                         placeholder="Digite aqui..."
                                         className="text-input"
+                                        rows="3"
                                       />
                                     ) : (
                                       <div className="text-display">
