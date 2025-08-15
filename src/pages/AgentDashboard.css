@@ -11,6 +11,11 @@
 
 .dashboard-header {
   margin-bottom: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .header-title {
@@ -577,5 +582,70 @@
   
   .stat-number {
     font-size: 18px;
+  }
+}
+
+/* Estilos para o botão de alternância */
+.view-mode-toggle {
+  display: flex;
+  background: white;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 6px;
+  min-width: 100px;
+  justify-content: center;
+}
+
+.toggle-btn:hover {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.toggle-btn.active {
+  background: #4f46e5;
+  color: white;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+}
+
+.toggle-btn.active:hover {
+  background: #4338ca;
+}
+
+/* Estilo para serviços cancelados */
+.status-indicator.cancelled {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .view-mode-toggle {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .toggle-btn {
+    flex: 1;
   }
 }

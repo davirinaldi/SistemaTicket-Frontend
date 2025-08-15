@@ -1,5 +1,8 @@
 import axios from 'axios';
 
+// Para desenvolvimento local, descomente a linha abaixo:
+//const API_BASE_URL = 'http://localhost:5000/api';
+// Para produção:
 const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
 
 const api = axios.create({
@@ -101,6 +104,7 @@ export const adminAPI = {
 // ===== SERVIÇOS PARA AGENTES =====
 export const servicesAPI = {
   getMyServices: () => api.get('/services/my-services'),
+  getByAgent: (agentId) => api.get(`/services/agent/${agentId}`),
   updateService: (id, data) => api.put(`/services/${id}`, data),
 };
 

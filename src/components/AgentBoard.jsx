@@ -42,6 +42,8 @@ const AgentBoard = () => {
   const [expandedCategories, setExpandedCategories] = useState({});
   const [message, setMessage] = useState(null);
   const [attachments, setAttachments] = useState({});
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [notesValue, setNotesValue] = useState('');
 
   useEffect(() => {
     loadData();
@@ -202,6 +204,32 @@ const AgentBoard = () => {
 
   const closeServiceModal = () => {
     setSelectedService(null);
+    setEditingNotes(false);
+    setNotesValue('');
+  };
+
+  // Funções para edição de observações
+  const startEditingNotes = () => {
+    setEditingNotes(true);
+    setNotesValue(selectedService.notes || '');
+  };
+
+  const cancelEditingNotes = () => {
+    setEditingNotes(false);
+    setNotesValue('');
+  };
+
+  const saveNotes = async () => {
+    try {
+      await updateService(selectedService.id, selectedService.status, notesValue);
+      setSelectedService({...selectedService, notes: notesValue});
+      setEditingNotes(false);
+      setNotesValue('');
+      showMessage('Observações atualizadas com sucesso!', 'success');
+    } catch (error) {
+      console.error('Erro ao salvar observações:', error);
+      showMessage('Erro ao salvar observações', 'error');
+    }
   };
 
   // useEffect para detectar ESC nos modais
@@ -900,10 +928,52 @@ const AgentBoard = () => {
               </div>
 
               <div className="service-detail-section">
-                <h3>Observações</h3>
-                <p className="service-notes">
-                  {selectedService.notes || 'Nenhuma observação'}
-                </p>
+                <div className="section-header">
+                  <h3>Observações</h3>
+                  {!editingNotes ? (
+                    <button 
+                      onClick={startEditingNotes} 
+                      className="edit-notes-btn"
+                      title="Editar observações"
+                    >
+                      <Edit size={16} />
+                      Editar
+                    </button>
+                  ) : (
+                    <div className="notes-actions">
+                      <button 
+                        onClick={saveNotes} 
+                        className="save-notes-btn"
+                        title="Salvar observações"
+                      >
+                        <CheckCircle2 size={16} />
+                        Salvar
+                      </button>
+                      <button 
+                        onClick={cancelEditingNotes} 
+                        className="cancel-notes-btn"
+                        title="Cancelar edição"
+                      >
+                        <X size={16} />
+                        Cancelar
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {editingNotes ? (
+                  <textarea
+                    value={notesValue}
+                    onChange={(e) => setNotesValue(e.target.value)}
+                    placeholder="Digite suas observações..."
+                    className="notes-textarea"
+                    rows="4"
+                    autoFocus
+                  />
+                ) : (
+                  <p className="service-notes">
+                    {selectedService.notes || 'Nenhuma observação'}
+                  </p>
+                )}
               </div>
 
               <div className="service-detail-section">
