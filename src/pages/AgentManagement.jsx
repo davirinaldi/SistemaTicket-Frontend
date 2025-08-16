@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { adminAPI } from '../services/api';
 import { 
   Users, 
@@ -11,15 +11,41 @@ import {
   AlertCircle,
   CheckCircle,
   Shield,
-  User
+  User,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+  Filter
 } from 'lucide-react';
 import Header from '../components/Header';
 import './AgentManagement.css';
+
+// Lazy load dos modals
+const CreateAdminModal = lazy(() => import('../components/modals/CreateAdminModal'));
+const CreateAgentModal = lazy(() => import('../components/modals/CreateAgentModal'));
+const EditUserModal = lazy(() => import('../components/modals/EditUserModal'));
+const EditPasswordModal = lazy(() => import('../components/modals/EditPasswordModal'));
 
 const AgentManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState(null);
+  
+  // Estados de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 1,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  
+  // Estados de filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   
   // Estados para modals
   const [showCreateAdmin, setShowCreateAdmin] = useState(false);
@@ -33,15 +59,31 @@ const AgentManagement = () => {
   const [editForm, setEditForm] = useState({ name: '', username: '', email: '', role: 'agent' });
   const [newPassword, setNewPassword] = useState('');
 
+  // Resetar página quando filtros mudarem
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter, statusFilter]);
+
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [currentPage, searchTerm, roleFilter, statusFilter]);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await adminAPI.getAllUsers();
+      
+      const params = {
+        page: currentPage,
+        limit: 20
+      };
+      
+      if (searchTerm) params.search = searchTerm;
+      if (roleFilter) params.role = roleFilter;
+      if (statusFilter) params.is_active = statusFilter === 'active';
+      
+      const response = await adminAPI.getAllUsers(params);
       setUsers(response.data.users || []);
+      setPagination(response.data.pagination || pagination);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -50,9 +92,9 @@ const AgentManagement = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, roleFilter, statusFilter, pagination]);
 
-  const handleCreateAdmin = async (e) => {
+  const handleCreateAdmin = useCallback(async (e) => {
     e.preventDefault();
     try {
       await adminAPI.createAdmin(newAdmin);
@@ -69,9 +111,9 @@ const AgentManagement = () => {
         text: 'Erro ao criar administrador: ' + (error.response?.data?.error || error.message)
       });
     }
-  };
+  }, [newAdmin, loadUsers]);
 
-  const handleCreateAgent = async (e) => {
+  const handleCreateAgent = useCallback(async (e) => {
     e.preventDefault();
     
     if (!newAgent.name.trim()) {
@@ -97,7 +139,7 @@ const AgentManagement = () => {
         text: 'Erro ao criar agente: ' + (error.response?.data?.error || error.message)
       });
     }
-  };
+  }, [newAgent.name, loadUsers]);
 
   const handleEditUser = (user) => {
     setEditingUser(user.id);
@@ -198,9 +240,15 @@ const AgentManagement = () => {
     }
   };
 
-  const hideMessage = () => {
+  const hideMessage = useCallback(() => {
     setMessage(null);
-  };
+  }, []);
+  
+  // Memoizar usuário selecionado para edição de senha
+  const selectedUser = useMemo(() => 
+    users.find(u => u.id === editingPassword), 
+    [users, editingPassword]
+  );
 
   if (loading) {
     return (
@@ -238,6 +286,43 @@ const AgentManagement = () => {
           </div>
         )}
 
+        <div className="filters-section">
+          <div className="filters-row">
+            <div className="search-filter">
+              <Search size={18} />
+              <input
+                type="text"
+                placeholder="Buscar por nome, username ou email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            
+            <div className="filter-group">
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">Todas as roles</option>
+                <option value="admin">Administrador</option>
+                <option value="agent">Agente</option>
+              </select>
+              
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">Todos os status</option>
+                <option value="active">Ativo</option>
+                <option value="inactive">Inativo</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
         <div className="create-section">
           <div className="create-buttons">
             <button 
@@ -258,7 +343,14 @@ const AgentManagement = () => {
         </div>
 
         <div className="users-section">
-          <h2>Usuários ({users.length})</h2>
+          <div className="section-header">
+            <h2>Usuários ({pagination.total})</h2>
+            <div className="pagination-info">
+              <span>
+                Mostrando {((pagination.page - 1) * pagination.limit) + 1} - {Math.min(pagination.page * pagination.limit, pagination.total)} de {pagination.total} usuários
+              </span>
+            </div>
+          </div>
           
           {users.length === 0 ? (
             <div className="empty-state">
@@ -267,258 +359,179 @@ const AgentManagement = () => {
               <small>Crie um novo usuário usando os botões acima</small>
             </div>
           ) : (
-            <div className="users-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nome</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map(user => (
-                    <tr key={user.id}>
-                      <td>
-                        <div className="user-info">
-                          <div className="user-avatar">
-                            {user.role === 'admin' ? <Shield size={16} /> : <User size={16} />}
-                          </div>
-                          {user.name}
-                        </div>
-                      </td>
-                      <td>{user.username}</td>
-                      <td>{user.email}</td>
-                      <td>
-                        <span className={`role-badge ${user.role}`}>
-                          {user.role === 'admin' ? 'Administrador' : 'Agente'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
-                          {user.is_active ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td>
-                        <div className="action-buttons">
-                          <button
-                            onClick={() => handleEditUser(user)}
-                            className="action-btn edit"
-                            title="Editar usuário"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => setEditingPassword(user.id)}
-                            className="action-btn password"
-                            title="Editar senha"
-                          >
-                            🔑
-                          </button>
-                          <button
-                            onClick={() => handleToggleUserStatus(user.id, user.is_active)}
-                            className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
-                            title={user.is_active ? 'Inativar' : 'Ativar'}
-                          >
-                            {user.is_active ? <EyeOff size={16} /> : <Eye size={16} />}
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id, user.name)}
-                            className="action-btn delete"
-                            title="Deletar usuário"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+            <>
+              <div className="users-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Nome</th>
+                      <th>Username</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Status</th>
+                      <th>Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {users.map(user => (
+                      <tr key={user.id}>
+                        <td>
+                          <div className="user-info">
+                            <div className="user-avatar">
+                              {user.role === 'admin' ? <Shield size={16} /> : <User size={16} />}
+                            </div>
+                            {user.name}
+                          </div>
+                        </td>
+                        <td>{user.username}</td>
+                        <td>{user.email}</td>
+                        <td>
+                          <span className={`role-badge ${user.role}`}>
+                            {user.role === 'admin' ? 'Administrador' : 'Agente'}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`status-badge ${user.is_active ? 'active' : 'inactive'}`}>
+                            {user.is_active ? 'Ativo' : 'Inativo'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="action-buttons">
+                            <button
+                              onClick={() => handleEditUser(user)}
+                              className="action-btn edit"
+                              title="Editar usuário"
+                            >
+                              <Edit size={16} />
+                            </button>
+                            <button
+                              onClick={() => setEditingPassword(user.id)}
+                              className="action-btn password"
+                              title="Editar senha"
+                            >
+                              🔑
+                            </button>
+                            <button
+                              onClick={() => handleToggleUserStatus(user.id, user.is_active)}
+                              className={`action-btn ${user.is_active ? 'deactivate' : 'activate'}`}
+                              title={user.is_active ? 'Inativar' : 'Ativar'}
+                            >
+                              {user.is_active ? <EyeOff size={16} /> : <Eye size={16} />}
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(user.id, user.name)}
+                              className="action-btn delete"
+                              title="Deletar usuário"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              {pagination.totalPages > 1 && (
+                <div className="pagination">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={!pagination.hasPrevPage}
+                    className="pagination-button"
+                  >
+                    Primeira
+                  </button>
+                  
+                  <button
+                    onClick={() => setCurrentPage(currentPage - 1)}
+                    disabled={!pagination.hasPrevPage}
+                    className="pagination-button"
+                  >
+                    <ChevronLeft size={16} />
+                    Anterior
+                  </button>
+                  
+                  <div className="pagination-info">
+                    <span>Página {pagination.page} de {pagination.totalPages}</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => setCurrentPage(currentPage + 1)}
+                    disabled={!pagination.hasNextPage}
+                    className="pagination-button"
+                  >
+                    Próxima
+                    <ChevronRight size={16} />
+                  </button>
+                  
+                  <button
+                    onClick={() => setCurrentPage(pagination.totalPages)}
+                    disabled={!pagination.hasNextPage}
+                    className="pagination-button"
+                  >
+                    Última
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
       {/* Modal Criar Admin */}
       {showCreateAdmin && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Criar Novo Administrador</h3>
-            <form onSubmit={handleCreateAdmin}>
-              <div className="form-group">
-                <label>Nome:</label>
-                <input
-                  type="text"
-                  value={newAdmin.name}
-                  onChange={(e) => setNewAdmin({...newAdmin, name: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Username:</label>
-                <input
-                  type="text"
-                  value={newAdmin.username}
-                  onChange={(e) => setNewAdmin({...newAdmin, username: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Password:</label>
-                <input
-                  type="password"
-                  value={newAdmin.password}
-                  onChange={(e) => setNewAdmin({...newAdmin, password: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email:</label>
-                <input
-                  type="email"
-                  value={newAdmin.email}
-                  onChange={(e) => setNewAdmin({...newAdmin, email: e.target.value})}
-                />
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowCreateAdmin(false)}>Cancelar</button>
-                <button type="submit">Criar Admin</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Suspense fallback={<div>Carregando...</div>}>
+          <CreateAdminModal
+            newAdmin={newAdmin}
+            setNewAdmin={setNewAdmin}
+            onSubmit={handleCreateAdmin}
+            onClose={() => setShowCreateAdmin(false)}
+          />
+        </Suspense>
       )}
 
       {/* Modal Criar Agente */}
       {showCreateAgent && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Criar Novo Agente</h3>
-            <form onSubmit={handleCreateAgent}>
-              <div className="form-group">
-                <label>Nome do Agente:</label>
-                <input
-                  type="text"
-                  value={newAgent.name}
-                  onChange={(e) => setNewAgent({...newAgent, name: e.target.value})}
-                  placeholder="Digite o nome completo do agente"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <p className="form-help">
-                  <strong>Nota:</strong> O sistema irá gerar automaticamente:
-                  <br />• Username baseado no nome
-                  <br />• Senha aleatória
-                  <br />• Email no formato username@sistema.local
-                </p>
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setShowCreateAgent(false)}>Cancelar</button>
-                <button type="submit">Criar Agente</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Suspense fallback={<div>Carregando...</div>}>
+          <CreateAgentModal
+            newAgent={newAgent}
+            setNewAgent={setNewAgent}
+            onSubmit={handleCreateAgent}
+            onClose={() => setShowCreateAgent(false)}
+          />
+        </Suspense>
       )}
 
       {/* Modal Editar Usuário */}
       {editingUser && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Editar Usuário</h3>
-            <form onSubmit={handleUpdateUser}>
-              <div className="form-group">
-                <label>Nome:</label>
-                <input
-                  type="text"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Username:</label>
-                <input
-                  type="text"
-                  value={editForm.username}
-                  onChange={(e) => setEditForm({...editForm, username: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Email:</label>
-                <input
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                />
-              </div>
-              <div className="form-group">
-                <label>Role:</label>
-                <select
-                  value={editForm.role}
-                  onChange={(e) => setEditForm({...editForm, role: e.target.value})}
-                  required
-                >
-                  <option value="agent">Agente</option>
-                  <option value="admin">Administrador</option>
-                </select>
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setEditingUser(null)}>Cancelar</button>
-                <button type="submit">Salvar</button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <Suspense fallback={<div>Carregando...</div>}>
+          <EditUserModal
+            editForm={editForm}
+            setEditForm={setEditForm}
+            onSubmit={handleUpdateUser}
+            onClose={() => setEditingUser(null)}
+          />
+        </Suspense>
       )}
 
       {/* Modal Editar Senha */}
       {editingPassword && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <h3>Editar Senha</h3>
-            <form onSubmit={(e) => {
+        <Suspense fallback={<div>Carregando...</div>}>
+          <EditPasswordModal
+            selectedUser={selectedUser}
+            newPassword={newPassword}
+            setNewPassword={setNewPassword}
+            onSubmit={(e) => {
               e.preventDefault();
               handleEditPassword(editingPassword);
-            }}>
-              <div className="form-group">
-                <label>Usuário:</label>
-                <p className="user-info">
-                  {users.find(u => u.id === editingPassword)?.name || 'Usuário não encontrado'}
-                </p>
-              </div>
-              <div className="form-group">
-                <label>Nova senha:</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Digite a nova senha"
-                  minLength={6}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <p className="form-help">
-                  <strong>Nota:</strong> A senha deve ter pelo menos 6 caracteres.
-                </p>
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => {
-                  setEditingPassword(null);
-                  setNewPassword('');
-                }}>Cancelar</button>
-                <button type="submit" disabled={newPassword.length < 6}>Salvar</button>
-              </div>
-            </form>
-          </div>
-        </div>
+            }}
+            onClose={() => {
+              setEditingPassword(null);
+              setNewPassword('');
+            }}
+          />
+        </Suspense>
       )}
     </div>
   );

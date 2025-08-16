@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 // Para desenvolvimento local, descomente a linha abaixo:
-//const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 // Para produção:
-const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
+//const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -83,7 +83,7 @@ export const adminAPI = {
   resetAgentPassword: (id) => api.post(`/agents/${id}/reset-password`),
   
   // Gerenciamento de usuários (novos endpoints)
-  getAllUsers: () => api.get('/admin/all-users'),
+  getAllUsers: (params = {}) => api.get('/admin/all-users', { params }),
   editPassword: (id, newPassword) => api.patch(`/admin/edit-password/${id}`, { newPassword }),
   updateUser: (id, userData) => api.patch(`/admin/update-user/${id}`, userData),
   deleteUser: (id) => api.delete(`/admin/delete-user/${id}`),

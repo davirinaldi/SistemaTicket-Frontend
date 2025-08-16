@@ -137,12 +137,10 @@ const ServiceManagement = () => {
       if (selectedAgent) params.agent_id = selectedAgent;
       if (selectedStatus) params.status = selectedStatus;
 
-      // Carregar apenas agentes e serviços (estatísticas causam problemas)
       const [agentsResponse, servicesResponse] = await Promise.all([
-        adminAPI.getAllUsers(),
+        adminAPI.getAllUsers({ limit: 100 }),
         adminAPI.getAllServices(params)
       ]);
-      
       
       setAgents(agentsResponse.data?.users || []);
       setServices(servicesResponse.data?.services || []);
