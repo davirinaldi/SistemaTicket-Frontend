@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 // Para desenvolvimento local, descomente a linha abaixo:
-const API_BASE_URL = 'http://localhost:5000/api';
+//const API_BASE_URL = 'http://localhost:5000/api';
 // Para produção:
-//const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
+const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
