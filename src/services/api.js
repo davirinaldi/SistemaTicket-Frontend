@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // Para desenvolvimento local, descomente a linha abaixo:
 //const API_BASE_URL = 'http://localhost:5000/api';
-// Para produção:
-const API_BASE_URL = 'https://backend-amber-tau-14.vercel.app/api';
+// Para produção: usando proxy reverso da Vercel
+const API_BASE_URL = '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
