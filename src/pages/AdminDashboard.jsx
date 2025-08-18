@@ -183,13 +183,7 @@ const AdminDashboard = () => {
                     });
                     
                     // Incluir agentes que têm tickets mas podem estar inativos
-                    if (agentStats) {
-                      Object.keys(agentStats).forEach(agentId => {
-                        if (!completeAgentStats[agentId]) {
-                          completeAgentStats[agentId] = agentStats[agentId];
-                        }
-                      });
-                    }
+                    
                     
                     const maxCount = Math.max(...Object.values(completeAgentStats), 1);
                     
